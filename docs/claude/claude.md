@@ -107,6 +107,14 @@ Ver `07_tablas_del_sistema.md` para esquema completo.
 - 6 fases: preparacion codigo, infra AWS, deploy frontend, CORS/cookies, monitoreo, smoke test
 - Incluye tareas Claude (codigo) y tareas usuario (consola AWS)
 
+### UX Redesign (completado)
+- SolicitudDetalle reescrito como orquestador con 3 bloques de proceso (Gestion, Pago, Evaluacion)
+- Bloques siempre visibles para todos los roles, botones deshabilitados con texto explicativo
+- Colores como lenguaje de estado: verde=completado, azul=en curso, gris=pendiente
+- Select funcional de estado_certificado (APROBADO/OBSERVADO) via PATCH
+- Archivos nuevos: `solicitud/detailStyles.ts`, `detailHelpers.ts`, `BlockGestion.tsx`, `BlockPago.tsx`, `BlockEvaluacion.tsx`
+- Backend: estado_certificado agregado a PATCH /solicitudes/{id}
+
 ### Mejoras funcionales posibles
 - Flujo de resultado medico (usar tabla resultado_medico)
 - Notificaciones por email

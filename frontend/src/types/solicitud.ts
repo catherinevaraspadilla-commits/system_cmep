@@ -192,6 +192,7 @@ export interface EditSolicitudRequest {
   lugar_atencion?: string;
   comentario?: string;
   servicio_id?: number;
+  estado_certificado?: string;
   cliente_nombres?: string;
   cliente_apellidos?: string;
   cliente_celular?: string;

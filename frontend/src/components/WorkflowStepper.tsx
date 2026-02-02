@@ -84,6 +84,8 @@ export default function WorkflowStepper({ estadoActual }: WorkflowStepperProps) 
                     color: "#fff",
                     background: COLORS[status],
                     boxShadow: status === "current" ? "0 0 0 4px rgba(13,110,253,0.2)" : "none",
+                    transform: status === "current" ? "scale(1.15)" : "none",
+                    transition: "transform 0.2s ease",
                     flexShrink: 0,
                   }}
                 >

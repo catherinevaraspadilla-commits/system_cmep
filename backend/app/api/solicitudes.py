@@ -198,6 +198,7 @@ async def editar_solicitud(
     # Campos directos de solicitud
     solicitud_fields = {
         "tipo_atencion", "lugar_atencion", "comentario", "servicio_id",
+        "estado_certificado",
     }
 
     for field, new_value in changes.items():
@@ -469,7 +470,7 @@ async def action_override(
         from app.schemas.solicitud import EditSolicitudRequest
         edit_data = EditSolicitudRequest(**body.payload)
         changes = edit_data.model_dump(exclude_unset=True)
-        solicitud_fields = {"tipo_atencion", "lugar_atencion", "comentario", "servicio_id"}
+        solicitud_fields = {"tipo_atencion", "lugar_atencion", "comentario", "servicio_id", "estado_certificado"}
         for field, new_value in changes.items():
             if field in solicitud_fields:
                 old_value = getattr(solicitud, field)

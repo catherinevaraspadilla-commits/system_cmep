@@ -87,6 +87,7 @@ class EditSolicitudRequest(BaseModel):
     lugar_atencion: str | None = None
     comentario: str | None = None
     servicio_id: int | None = None
+    estado_certificado: str | None = None  # APROBADO | OBSERVADO
     # Cliente editable
     cliente_nombres: str | None = None
     cliente_apellidos: str | None = None

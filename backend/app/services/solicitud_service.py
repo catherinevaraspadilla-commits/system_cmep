@@ -27,6 +27,11 @@ from app.services.policy import get_acciones_permitidas, assert_allowed
 from app.utils.time import utcnow
 
 
+def _enum_val(v):
+    """Extract .value from enum members (e.g. TipoDocumento.DNI -> 'DNI')."""
+    return v.value if hasattr(v, "value") else v
+
+
 async def find_or_create_persona(
     db: AsyncSession,
     tipo_documento: str,
@@ -375,15 +380,15 @@ async def list_solicitudes(
             "codigo": sol.codigo,
             "cliente": {
                 "persona_id": sol.cliente_id,
-                "tipo_documento": cliente_persona.tipo_documento if cliente_persona else None,
+                "tipo_documento": _enum_val(cliente_persona.tipo_documento) if cliente_persona else None,
                 "numero_documento": cliente_persona.numero_documento if cliente_persona else None,
-                "doc": f"{cliente_persona.tipo_documento} {cliente_persona.numero_documento}" if cliente_persona else "?",
+                "doc": f"{_enum_val(cliente_persona.tipo_documento)} {cliente_persona.numero_documento}" if cliente_persona else "?",
                 "nombre": f"{cliente_persona.nombres} {cliente_persona.apellidos}" if cliente_persona else "?",
                 "celular": cliente_persona.celular_1 if cliente_persona else None,
             } if sol.cliente else None,
             "apoderado": {
                 "persona_id": sol.apoderado.persona_id,
-                "tipo_documento": sol.apoderado.tipo_documento,
+                "tipo_documento": _enum_val(sol.apoderado.tipo_documento),
                 "numero_documento": sol.apoderado.numero_documento,
                 "nombres": sol.apoderado.nombres,
                 "apellidos": sol.apoderado.apellidos,
@@ -411,15 +416,15 @@ def build_detail_dto(solicitud: SolicitudCmep, user_roles: list[str]) -> dict:
         "codigo": solicitud.codigo,
         "cliente": {
             "persona_id": solicitud.cliente_id,
-            "tipo_documento": cliente_persona.tipo_documento if cliente_persona else None,
+            "tipo_documento": _enum_val(cliente_persona.tipo_documento) if cliente_persona else None,
             "numero_documento": cliente_persona.numero_documento if cliente_persona else None,
-            "doc": f"{cliente_persona.tipo_documento} {cliente_persona.numero_documento}" if cliente_persona else "?",
+            "doc": f"{_enum_val(cliente_persona.tipo_documento)} {cliente_persona.numero_documento}" if cliente_persona else "?",
             "nombre": f"{cliente_persona.nombres} {cliente_persona.apellidos}" if cliente_persona else "?",
             "celular": cliente_persona.celular_1 if cliente_persona else None,
         } if solicitud.cliente else None,
         "apoderado": {
             "persona_id": solicitud.apoderado.persona_id,
-            "tipo_documento": solicitud.apoderado.tipo_documento,
+            "tipo_documento": _enum_val(solicitud.apoderado.tipo_documento),
             "numero_documento": solicitud.apoderado.numero_documento,
             "nombres": solicitud.apoderado.nombres,
             "apellidos": solicitud.apoderado.apellidos,
