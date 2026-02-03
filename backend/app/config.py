@@ -42,6 +42,9 @@ class Settings(BaseSettings):
     UPLOAD_DIR: str = "uploads"
     S3_BUCKET: str = ""
 
+    # Cookies (produccion)
+    COOKIE_DOMAIN: str = ""  # vacio = no domain attr; prod: ".tudominio.com"
+
     @property
     def DATABASE_URL(self) -> str:
         if self.DB_URL:
@@ -62,6 +65,10 @@ class Settings(BaseSettings):
     @property
     def cors_origins_list(self) -> list[str]:
         return [o.strip() for o in self.CORS_ORIGINS.split(",") if o.strip()]
+
+    @property
+    def is_prod(self) -> bool:
+        return self.APP_ENV == "prod"
 
     model_config = {"env_file": ".env", "extra": "ignore"}
 
