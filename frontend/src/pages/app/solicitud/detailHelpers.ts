@@ -40,8 +40,8 @@ export function getPagoState(detail: SolicitudDetailDTO): BlockVisualState {
  * Block C: Evaluacion medica
  * - completed: CERRADO
  * - in_progress: medico assigned
- * - pending: paid but no medico
- * - blocked: not paid yet
+ * - pending: gestor assigned but no medico yet (regardless of pago)
+ * - blocked: no gestor yet
  */
 export function getEvaluacionState(detail: SolicitudDetailDTO): BlockVisualState {
   if (detail.estado_operativo === "CANCELADO") {
@@ -53,7 +53,7 @@ export function getEvaluacionState(detail: SolicitudDetailDTO): BlockVisualState
   if (detail.asignaciones_vigentes.MEDICO) {
     return "in_progress";
   }
-  if (detail.estado_pago === "PAGADO") {
+  if (detail.asignaciones_vigentes.GESTOR) {
     return "pending";
   }
   return "blocked";
@@ -70,10 +70,10 @@ export function getPagoBlockedText(detail: SolicitudDetailDTO): string | null {
 export function getEvaluacionBlockedText(detail: SolicitudDetailDTO): string | null {
   const state = getEvaluacionState(detail);
   if (state === "blocked") {
-    return "Disponible cuando el pago este registrado y el medico asignado.";
+    return "Disponible cuando se asigne un gestor.";
   }
   if (state === "pending" && !detail.asignaciones_vigentes.MEDICO) {
-    return "Pago registrado. Falta asignar un medico.";
+    return "Falta asignar un medico.";
   }
   return null;
 }

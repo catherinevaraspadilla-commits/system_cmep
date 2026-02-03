@@ -115,6 +115,18 @@ Ver `07_tablas_del_sistema.md` para esquema completo.
 - Archivos nuevos: `solicitud/detailStyles.ts`, `detailHelpers.ts`, `BlockGestion.tsx`, `BlockPago.tsx`, `BlockEvaluacion.tsx`
 - Backend: estado_certificado agregado a PATCH /solicitudes/{id}
 
+### Fixes logicos y funcionales (completado)
+- Historial de cambios: muestra nombre del usuario (no solo ID) via join users->personas
+- Pago: campo `comentario` agregado a pago_solicitud (modelo, schema, API, frontend)
+- Pago: "Tarifa" renombrado a "Tarifa regular" en BlockPago
+- POLICY: ASIGNAR_MEDICO permitido en estado ASIGNADO_GESTOR (ADMIN, GESTOR)
+- CERRAR: requiere al menos 1 pago registrado y medico asignado vigente
+- Tipo atencion / lugar atencion movidos a BlockGestion (campos del gestor, con edicion inline)
+- Servicio unico: seed actualizado a 1 registro ("Certificado Medico de Evaluacion Profesional", PEN 200)
+- GET /servicios: nuevo endpoint para listar servicios disponibles
+- SolicitudNueva: selector de servicio agregado (auto-selecciona si solo hay uno)
+- Documentacion: `docs/system/datos_default_bd.md` con valores default de BD
+
 ### Mejoras funcionales posibles
 - Flujo de resultado medico (usar tabla resultado_medico)
 - Notificaciones por email

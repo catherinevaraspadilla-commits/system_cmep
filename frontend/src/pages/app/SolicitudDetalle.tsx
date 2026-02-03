@@ -53,10 +53,11 @@ export default function SolicitudDetalle() {
   // Form fields for actions
   const [personaId, setPersonaId] = useState("");
   const [pagoCanal, setPagoCanal] = useState("YAPE");
-  const [pagoFecha, setPagoFecha] = useState(new Date().toISOString().split("T")[0]);
+  const [pagoFecha, setPagoFecha] = useState(new Date().toISOString().slice(0, 10));
   const [pagoMonto, setPagoMonto] = useState("");
   const [pagoMoneda, setPagoMoneda] = useState("PEN");
   const [pagoRef, setPagoRef] = useState("");
+  const [pagoComentario, setPagoComentario] = useState("");
   const [actionComentario, setActionComentario] = useState("");
 
   // File upload state (M4)
@@ -94,6 +95,10 @@ export default function SolicitudDetalle() {
       comentario: detail.comentario ?? "",
       tipo_atencion: detail.tipo_atencion ?? "",
       lugar_atencion: detail.lugar_atencion ?? "",
+      cliente_nombres: "",
+      cliente_apellidos: "",
+      cliente_celular: detail.cliente.celular ?? "",
+      cliente_email: "",
     });
     setEditing(true);
   };
@@ -118,6 +123,18 @@ export default function SolicitudDetalle() {
       if (editData.lugar_atencion !== undefined && editData.lugar_atencion !== (detail?.lugar_atencion ?? "")) {
         payload.lugar_atencion = editData.lugar_atencion || undefined;
       }
+      if (editData.cliente_nombres) {
+        payload.cliente_nombres = editData.cliente_nombres;
+      }
+      if (editData.cliente_apellidos) {
+        payload.cliente_apellidos = editData.cliente_apellidos;
+      }
+      if (editData.cliente_celular !== undefined && editData.cliente_celular !== (detail?.cliente.celular ?? "")) {
+        payload.cliente_celular = editData.cliente_celular || undefined;
+      }
+      if (editData.cliente_email) {
+        payload.cliente_email = editData.cliente_email;
+      }
 
       const res = await api.patch<ApiResponse<SolicitudDetailDTO>>(`/solicitudes/${id}`, payload);
       setDetail(res.data);
@@ -126,6 +143,26 @@ export default function SolicitudDetalle() {
       handleActionError(err);
     } finally {
       setSaving(false);
+    }
+  };
+
+  const handleSaveTipoLugar = async (tipo_atencion: string, lugar_atencion: string) => {
+    if (!id) return;
+    setError(null);
+    try {
+      const payload: EditSolicitudRequest = {};
+      if (tipo_atencion !== (detail?.tipo_atencion ?? "")) {
+        payload.tipo_atencion = tipo_atencion || undefined;
+      }
+      if (lugar_atencion !== (detail?.lugar_atencion ?? "")) {
+        payload.lugar_atencion = lugar_atencion || undefined;
+      }
+      if (Object.keys(payload).length > 0) {
+        const res = await api.patch<ApiResponse<SolicitudDetailDTO>>(`/solicitudes/${id}`, payload);
+        setDetail(res.data);
+      }
+    } catch (err: unknown) {
+      handleActionError(err);
     }
   };
 
@@ -166,10 +203,11 @@ export default function SolicitudDetalle() {
   const resetActionForms = () => {
     setPersonaId("");
     setPagoCanal("YAPE");
-    setPagoFecha(new Date().toISOString().split("T")[0]);
+    setPagoFecha(new Date().toISOString().slice(0, 10));
     setPagoMonto("");
     setPagoMoneda("PEN");
     setPagoRef("");
+    setPagoComentario("");
     setActionComentario("");
   };
 
@@ -342,6 +380,44 @@ export default function SolicitudDetalle() {
         </div>
       )}
 
+      {/* ─── Cancelar solicitud (boton suelto, sin seccion) ─── */}
+      {can("CANCELAR") && activeModal !== "cancelar" && (
+        <div style={{ marginBottom: "0.75rem" }}>
+          <button onClick={() => openModal("cancelar")} style={actionBtnStyle("#b81414")}>
+            Cancelar solicitud
+          </button>
+        </div>
+      )}
+
+      {/* ─── Cancelar form (aparece debajo del boton) ─── */}
+      {activeModal === "cancelar" && (
+        <div style={{
+          border: "1px solid #dee2e6",
+          borderRadius: 8,
+          padding: "1rem 1.25rem",
+          marginBottom: "1rem",
+          background: "#f8f9fa",
+        }}>
+          <h3 style={{ margin: "0 0 0.75rem", color: "#6c757d" }}>Cancelar solicitud</h3>
+          <p style={{ color: "#6c757d", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
+            Se marcara como CANCELADA. Solo un admin podra revertir via Override.
+          </p>
+          <div style={{ marginBottom: "0.75rem" }}>
+            <label style={labelStyle}>Motivo (opcional)</label>
+            <input value={actionComentario} onChange={(e) => setActionComentario(e.target.value)}
+              placeholder="Razon de cancelacion..." style={{ ...inputStyle, maxWidth: 400 }} />
+          </div>
+          <div style={{ display: "flex", gap: "0.5rem" }}>
+            <button disabled={actionLoading}
+              onClick={() => executeAction("cancelar", { comentario: actionComentario || undefined })}
+              style={actionBtnStyle(actionLoading ? "#6c757d" : "#dc3545")}>
+              {actionLoading ? "Procesando..." : "Confirmar cancelacion"}
+            </button>
+            <button onClick={() => setActiveModal(null)} style={cancelBtnStyle}>Cancelar</button>
+          </div>
+        </div>
+      )}
+
       {/* ─── Datos del cliente + promotor + info solicitud ─── */}
       <div style={{
         border: "1px solid #d1c4e9",
@@ -392,8 +468,6 @@ export default function SolicitudDetalle() {
         )}
         <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid #d1c4e9" }}>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem" }}>
-            <div><span style={labelStyle}>Tipo atencion: </span><span style={valueStyle}>{detail.tipo_atencion ?? "-"}</span></div>
-            <div><span style={labelStyle}>Lugar atencion: </span><span style={valueStyle}>{detail.lugar_atencion ?? "-"}</span></div>
             <div><span style={labelStyle}>Creado: </span><span style={valueStyle}>{new Date(detail.created_at).toLocaleString()}</span></div>
             {detail.fecha_cierre && (
               <div><span style={labelStyle}>Fecha cierre: </span><span style={valueStyle}>{new Date(detail.fecha_cierre).toLocaleString()}</span></div>
@@ -424,18 +498,29 @@ export default function SolicitudDetalle() {
           background: "#f8f9fa",
         }}>
           <h3 style={{ margin: "0 0 0.75rem", color: PRIMARY }}>Editar datos</h3>
+          <p style={{ fontSize: "0.82rem", color: "#6c757d", margin: "0 0 0.75rem" }}>
+            Deje en blanco los campos que no desea modificar.
+          </p>
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
             <div>
-              <label style={labelStyle}>Tipo atencion</label>
-              <select value={editData.tipo_atencion ?? ""} onChange={(e) => setEditData({ ...editData, tipo_atencion: e.target.value })} style={inputStyle}>
-                <option value="">Sin definir</option>
-                <option value="VIRTUAL">VIRTUAL</option>
-                <option value="PRESENCIAL">PRESENCIAL</option>
-              </select>
+              <label style={labelStyle}>Nombres del cliente</label>
+              <input value={editData.cliente_nombres ?? ""} onChange={(e) => setEditData({ ...editData, cliente_nombres: e.target.value })}
+                placeholder={detail.cliente.nombre ?? "Nombres"} style={inputStyle} />
             </div>
             <div>
-              <label style={labelStyle}>Lugar atencion</label>
-              <input value={editData.lugar_atencion ?? ""} onChange={(e) => setEditData({ ...editData, lugar_atencion: e.target.value })} style={inputStyle} />
+              <label style={labelStyle}>Apellidos del cliente</label>
+              <input value={editData.cliente_apellidos ?? ""} onChange={(e) => setEditData({ ...editData, cliente_apellidos: e.target.value })}
+                placeholder="Apellidos" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Celular del cliente</label>
+              <input value={editData.cliente_celular ?? ""} onChange={(e) => setEditData({ ...editData, cliente_celular: e.target.value })}
+                placeholder="Celular" style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Email del cliente</label>
+              <input value={editData.cliente_email ?? ""} onChange={(e) => setEditData({ ...editData, cliente_email: e.target.value })}
+                placeholder="correo@ejemplo.com" style={inputStyle} />
             </div>
           </div>
           <div style={{ marginTop: "0.75rem" }}>
@@ -464,7 +549,7 @@ export default function SolicitudDetalle() {
         onOpenModal={(m) => openModal(m)}
         onCloseModal={() => setActiveModal(null)}
         onExecuteAction={executeAction}
-        onOpenCancelModal={() => openModal("cancelar")}
+        onSaveTipoLugar={handleSaveTipoLugar}
       />
 
       {/* ─── Block B: Pago ─── */}
@@ -479,6 +564,7 @@ export default function SolicitudDetalle() {
         pagoMonto={pagoMonto} onPagoMontoChange={setPagoMonto}
         pagoMoneda={pagoMoneda} onPagoMonedaChange={setPagoMoneda}
         pagoRef={pagoRef} onPagoRefChange={setPagoRef}
+        pagoComentario={pagoComentario} onPagoComentarioChange={setPagoComentario}
         actionLoading={actionLoading}
         onExecuteAction={executeAction}
       />
@@ -499,35 +585,6 @@ export default function SolicitudDetalle() {
         onExecuteAction={executeAction}
         onSaveEstadoCertificado={handleSaveEstadoCertificado}
       />
-
-      {/* ─── Cancelar modal (cross-cutting, at orchestrator level) ─── */}
-      {activeModal === "cancelar" && (
-        <div style={{
-          border: "1px solid #f5c6cb",
-          borderRadius: 8,
-          padding: "1rem 1.25rem",
-          marginBottom: "1rem",
-          background: "#fff5f5",
-        }}>
-          <h3 style={{ margin: "0 0 0.75rem", color: "#dc3545" }}>Cancelar solicitud</h3>
-          <p style={{ color: "#dc3545", fontSize: "0.85rem", marginBottom: "0.75rem" }}>
-            Se marcara como CANCELADA. Solo un admin podra revertir via Override.
-          </p>
-          <div style={{ marginBottom: "0.75rem" }}>
-            <label style={labelStyle}>Motivo (opcional)</label>
-            <input value={actionComentario} onChange={(e) => setActionComentario(e.target.value)}
-              placeholder="Razon de cancelacion..." style={{ ...inputStyle, maxWidth: 400 }} />
-          </div>
-          <div style={{ display: "flex", gap: "0.5rem" }}>
-            <button disabled={actionLoading}
-              onClick={() => executeAction("cancelar", { comentario: actionComentario || undefined })}
-              style={actionBtnStyle(actionLoading ? "#6c757d" : "#dc3545")}>
-              {actionLoading ? "Procesando..." : "Confirmar cancelacion"}
-            </button>
-            <button onClick={() => setActiveModal(null)} style={cancelBtnStyle}>Cancelar</button>
-          </div>
-        </div>
-      )}
 
       {/* ─── Archivos (siempre visible) ─── */}
       <div style={neutralSectionStyle}>
@@ -612,6 +669,7 @@ export default function SolicitudDetalle() {
                 <th style={thStyle}>Campo</th>
                 <th style={thStyle}>Anterior</th>
                 <th style={thStyle}>Nuevo</th>
+                <th style={thStyle}>Usuario</th>
                 <th style={thStyle}>Comentario</th>
               </tr>
             </thead>
@@ -622,6 +680,7 @@ export default function SolicitudDetalle() {
                   <td style={tdStyle}>{h.campo}</td>
                   <td style={tdStyle}>{h.valor_anterior ?? "-"}</td>
                   <td style={tdStyle}>{h.valor_nuevo ?? "-"}</td>
+                  <td style={tdStyle}>{h.usuario_nombre ?? "-"}</td>
                   <td style={tdStyle}>{h.comentario ?? ""}</td>
                 </tr>
               ))}

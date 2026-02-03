@@ -18,6 +18,7 @@ from app.api.promotores import router as promotores_router
 from app.api.empleados import router as empleados_router
 from app.api.admin import router as admin_router
 from app.api.reportes import router as reportes_router
+from app.api.servicios import router as servicios_router
 
 logger = logging.getLogger("cmep")
 
@@ -67,6 +68,7 @@ app.include_router(promotores_router)  # M4.5
 app.include_router(empleados_router)  # M4.5
 app.include_router(admin_router)  # M5
 app.include_router(reportes_router)  # M7
+app.include_router(servicios_router)  # Catalogo servicios
 
 
 # --- Public endpoints (M0) ---

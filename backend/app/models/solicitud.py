@@ -261,6 +261,7 @@ class PagoSolicitud(Base):
     monto: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
     moneda: Mapped[str] = mapped_column(String(3), nullable=False, default="PEN")
     referencia_transaccion: Mapped[str | None] = mapped_column(String(255), nullable=True)
+    comentario: Mapped[str | None] = mapped_column(Text, nullable=True)
 
     # Validacion del pago
     validated_by: Mapped[int | None] = mapped_column(

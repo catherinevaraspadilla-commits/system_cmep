@@ -19,6 +19,7 @@ interface BlockPagoProps {
   pagoMonto: string; onPagoMontoChange: (v: string) => void;
   pagoMoneda: string; onPagoMonedaChange: (v: string) => void;
   pagoRef: string; onPagoRefChange: (v: string) => void;
+  pagoComentario: string; onPagoComentarioChange: (v: string) => void;
   actionLoading: boolean;
   onExecuteAction: (endpoint: string, payload: unknown) => void;
 }
@@ -27,7 +28,8 @@ export default function BlockPago({
   detail, can, activeModal, onOpenModal, onCloseModal,
   pagoCanal, onPagoCanalChange, pagoFecha, onPagoFechaChange,
   pagoMonto, onPagoMontoChange, pagoMoneda, onPagoMonedaChange,
-  pagoRef, onPagoRefChange, actionLoading, onExecuteAction,
+  pagoRef, onPagoRefChange, pagoComentario, onPagoComentarioChange,
+  actionLoading, onExecuteAction,
 }: BlockPagoProps) {
   const state = getPagoState(detail);
   const blockedText = getPagoBlockedText(detail);
@@ -47,7 +49,7 @@ export default function BlockPago({
           <span style={valueStyle}>{detail.estado_pago}</span>
         </div>
         <div>
-          <span style={labelStyle}>Tarifa: </span>
+          <span style={labelStyle}>Tarifa regular: </span>
           <span style={valueStyle}>
             {detail.tarifa_monto ? `${detail.tarifa_moneda} ${detail.tarifa_monto}` : "-"}
           </span>
@@ -68,6 +70,7 @@ export default function BlockPago({
                 <th style={thStyle}>Fecha</th>
                 <th style={thStyle}>Monto</th>
                 <th style={thStyle}>Referencia</th>
+                <th style={thStyle}>Comentario</th>
                 <th style={thStyle}>Validado</th>
               </tr>
             </thead>
@@ -78,6 +81,7 @@ export default function BlockPago({
                   <td style={tdStyle}>{p.fecha_pago ?? "-"}</td>
                   <td style={tdStyle}>{p.moneda} {p.monto}</td>
                   <td style={tdStyle}>{p.referencia_transaccion ?? "-"}</td>
+                  <td style={tdStyle}>{p.comentario ?? "-"}</td>
                   <td style={tdStyle}>{p.validated_at ? new Date(p.validated_at).toLocaleString() : "Pendiente"}</td>
                 </tr>
               ))}
@@ -142,6 +146,11 @@ export default function BlockPago({
             <input value={pagoRef} onChange={(e) => onPagoRefChange(e.target.value)}
               placeholder="Numero de operacion, voucher..." style={{ ...inputStyle, maxWidth: 400 }} />
           </div>
+          <div style={{ marginTop: "0.75rem" }}>
+            <label style={labelStyle}>Comentario</label>
+            <input value={pagoComentario} onChange={(e) => onPagoComentarioChange(e.target.value)}
+              placeholder="Ej: descuento aplicado, pago parcial..." style={{ ...inputStyle, maxWidth: 400 }} />
+          </div>
           <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.75rem" }}>
             <button disabled={actionLoading || !pagoMonto || !pagoFecha}
               onClick={() => onExecuteAction("registrar-pago", {
@@ -150,6 +159,7 @@ export default function BlockPago({
                 monto: parseFloat(pagoMonto),
                 moneda: pagoMoneda,
                 referencia_transaccion: pagoRef || undefined,
+                comentario: pagoComentario || undefined,
               })}
               style={actionBtnStyle(actionLoading ? "#6c757d" : "#198754")}>
               {actionLoading ? "Procesando..." : "Registrar pago"}

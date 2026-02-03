@@ -131,10 +131,10 @@ export default function WorkflowStepper({ estadoActual }: WorkflowStepperProps) 
           style={{
             marginTop: "0.75rem",
             padding: "0.5rem 1rem",
-            background: "#fff5f5",
-            border: "1px solid #dc3545",
+            background: "#f8f9fa",
+            border: "1px solid #6c757d",
             borderRadius: 4,
-            color: "#dc3545",
+            color: "#6c757d",
             fontWeight: 600,
             fontSize: "0.85rem",
             textAlign: "center",

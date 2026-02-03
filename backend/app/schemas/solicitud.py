@@ -109,6 +109,7 @@ class RegistrarPagoRequest(BaseModel):
     monto: Decimal = Field(..., gt=0)
     moneda: str = Field("PEN", pattern="^(PEN|USD)$")
     referencia_transaccion: str | None = None
+    comentario: str | None = None
 
 
 class AsignarMedicoRequest(BaseModel):

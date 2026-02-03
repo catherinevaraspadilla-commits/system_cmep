@@ -27,6 +27,7 @@ from app.services.solicitud_service import (
     get_solicitud_by_id,
     list_solicitudes,
     build_detail_dto,
+    resolve_historial_user_names,
     validate_empleado_r10,
     asignar_rol,
     registrar_pago,
@@ -160,7 +161,8 @@ async def detalle_solicitud(
         )
 
     user_roles = [r.user_role for r in current_user.roles]
-    detail = build_detail_dto(solicitud, user_roles)
+    user_names = await resolve_historial_user_names(db, solicitud)
+    detail = build_detail_dto(solicitud, user_roles, user_names)
 
     return {"ok": True, "data": detail}
 
@@ -243,7 +245,8 @@ async def editar_solicitud(
     await db.flush()
 
     # Recargar para retornar detalle actualizado
-    detail = build_detail_dto(solicitud, user_roles)
+    user_names = await resolve_historial_user_names(db, solicitud)
+    detail = build_detail_dto(solicitud, user_roles, user_names)
     return {"ok": True, "data": detail}
 
 
@@ -272,7 +275,8 @@ async def _reload_and_detail(db, solicitud_id, user_roles):
     # Expunge stale object so re-query gives fresh selectin loads
     db.expire_all()
     fresh = await get_solicitud_by_id(db, solicitud_id)
-    return build_detail_dto(fresh, user_roles)
+    user_names = await resolve_historial_user_names(db, fresh)
+    return build_detail_dto(fresh, user_roles, user_names)
 
 
 # ── POST /solicitudes/{id}/asignar-gestor ─────────────────────────────
@@ -341,6 +345,7 @@ async def action_registrar_pago(
         moneda=body.moneda,
         referencia_transaccion=body.referencia_transaccion,
         user_id=current_user.user_id,
+        comentario=body.comentario,
     )
 
     detail = await _reload_and_detail(db, solicitud_id, user_roles)
@@ -360,13 +365,6 @@ async def action_asignar_medico(
     solicitud = await _load_solicitud_or_404(db, solicitud_id)
     user_roles, estado_op = _get_sol_and_estado(solicitud, current_user)
     assert_allowed(user_roles, estado_op, "ASIGNAR_MEDICO")
-
-    # Requisito: estado_pago debe ser PAGADO
-    if solicitud.estado_pago != "PAGADO":
-        raise HTTPException(status_code=422, detail={
-            "ok": False, "error": {"code": "VALIDATION_ERROR",
-                                   "message": "La solicitud debe estar PAGADA para asignar medico"}
-        })
 
     await validate_empleado_r10(db, body.persona_id_medico, "MEDICO")
     await asignar_rol(db, solicitud, "MEDICO", body.persona_id_medico,
@@ -505,6 +503,7 @@ async def action_override(
             monto=pago_data.monto, moneda=pago_data.moneda,
             referencia_transaccion=pago_data.referencia_transaccion,
             user_id=current_user.user_id,
+            comentario=pago_data.comentario,
         )
 
     elif body.accion == "CERRAR":

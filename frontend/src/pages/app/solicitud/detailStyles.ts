@@ -27,7 +27,7 @@ export const estadoColor: Record<EstadoOperativo, string> = {
   PAGADO: "#198754",
   ASIGNADO_MEDICO: "#6f42c1",
   CERRADO: "#0d9488",
-  CANCELADO: "#dc3545",
+  CANCELADO: "#6c757d",
 };
 
 // === Block container ===
@@ -52,7 +52,7 @@ export const neutralSectionStyle: CSSProperties = {
 // === Block title ===
 export const blockTitleStyle: CSSProperties = {
   margin: "0 0 0.75rem",
-  fontSize: "1rem",
+  fontSize: "1.05rem",
   fontWeight: 700,
   color: PRIMARY,
   display: "flex",
@@ -62,13 +62,14 @@ export const blockTitleStyle: CSSProperties = {
 
 // === Labels and values ===
 export const labelStyle: CSSProperties = {
-  fontWeight: 600,
-  fontSize: "0.85rem",
-  color: "#555",
+  fontWeight: 700,
+  fontSize: "0.9rem",
+  color: "#333",
 };
 
 export const valueStyle: CSSProperties = {
   fontSize: "0.95rem",
+  color: "#1a1a1a",
 };
 
 export const inputStyle: CSSProperties = {
@@ -148,13 +149,15 @@ export function statusDotStyle(state: BlockVisualState): CSSProperties {
 export const tableStyle: CSSProperties = {
   width: "100%",
   borderCollapse: "collapse",
-  fontSize: "0.85rem",
+  fontSize: "0.9rem",
 };
 
 export const thStyle: CSSProperties = {
-  padding: "0.4rem",
+  padding: "0.5rem",
   textAlign: "left",
-  borderBottom: "1px solid #dee2e6",
+  borderBottom: "2px solid #dee2e6",
+  fontWeight: 700,
+  color: "#333",
 };
 
 export const tdStyle: CSSProperties = {

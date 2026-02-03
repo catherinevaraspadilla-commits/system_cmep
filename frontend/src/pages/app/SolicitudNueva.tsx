@@ -73,10 +73,14 @@ export default function SolicitudNueva() {
   const [promCelular, setPromCelular] = useState("");
   const [promFuente, setPromFuente] = useState("");
 
+  // Servicio
+  const [servicios, setServicios] = useState<{ servicio_id: number; descripcion_servicio: string; tarifa_servicio: string; moneda_tarifa: string }[]>([]);
+  const [servicioId, setServicioId] = useState("");
+
   // Comentario
   const [comentario, setComentario] = useState("");
 
-  // Fetch promotores on mount
+  // Fetch promotores + servicios on mount
   useEffect(() => {
     api
       .get<{ ok: boolean; data: PromotorListItem[] }>("/promotores")
@@ -84,6 +88,15 @@ export default function SolicitudNueva() {
       .catch(() => {
         /* promotores list is optional — ignore errors */
       });
+    api
+      .get<{ ok: boolean; data: typeof servicios }>("/servicios")
+      .then((res) => {
+        setServicios(res.data);
+        if (res.data.length === 1) {
+          setServicioId(String(res.data[0].servicio_id));
+        }
+      })
+      .catch(() => {});
   }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -145,6 +158,10 @@ export default function SolicitudNueva() {
       if (promCelular.trim()) prom.celular_1 = promCelular.trim();
       if (promFuente.trim()) prom.fuente_promotor = promFuente.trim();
       payload.promotor = prom;
+    }
+
+    if (servicioId) {
+      payload.servicio_id = parseInt(servicioId);
     }
 
     if (comentario.trim()) {
@@ -395,6 +412,22 @@ export default function SolicitudNueva() {
               </div>
             </div>
           )}
+        </fieldset>
+
+        {/* ── Servicio ── */}
+        <fieldset style={{ border: "1px solid #dee2e6", borderRadius: 4, padding: "1rem", marginBottom: "1rem" }}>
+          <legend style={{ fontWeight: 700 }}>Servicio *</legend>
+          <div style={fieldGroupStyle}>
+            <label style={labelStyle}>Seleccionar servicio</label>
+            <select value={servicioId} onChange={(e) => setServicioId(e.target.value)} style={inputStyle}>
+              <option value="">-- Seleccionar servicio --</option>
+              {servicios.map((s) => (
+                <option key={s.servicio_id} value={s.servicio_id}>
+                  {s.descripcion_servicio} — {s.moneda_tarifa} {s.tarifa_servicio}
+                </option>
+              ))}
+            </select>
+          </div>
         </fieldset>
 
         {/* ── Comentario ── */}

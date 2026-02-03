@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { SolicitudDetailDTO } from "../../../types/solicitud";
 import { getEvaluacionState, getEvaluacionBlockedText, isTerminal } from "./detailHelpers";
 import {
@@ -37,6 +38,24 @@ export default function BlockEvaluacion({
     ? detail.resultados_medicos[detail.resultados_medicos.length - 1]
     : null;
 
+  const [cerrarFaltantes, setCerrarFaltantes] = useState<string[]>([]);
+
+  const handleCerrarClick = () => {
+    const faltantes: string[] = [];
+    if (!detail.asignaciones_vigentes.GESTOR) faltantes.push("Gestor asignado");
+    if (!detail.tipo_atencion) faltantes.push("Tipo de atencion");
+    if (detail.pagos.length === 0) faltantes.push("Al menos 1 pago registrado");
+    if (!detail.asignaciones_vigentes.MEDICO) faltantes.push("Medico asignado");
+    if (!detail.estado_certificado) faltantes.push("Estado de certificado");
+
+    if (faltantes.length > 0) {
+      setCerrarFaltantes(faltantes);
+      return;
+    }
+    setCerrarFaltantes([]);
+    onOpenModal("cerrar");
+  };
+
   return (
     <div style={blockStyle(state)}>
       <div style={blockTitleStyle}>
@@ -55,80 +74,37 @@ export default function BlockEvaluacion({
             {detail.asignaciones_vigentes.MEDICO?.nombre ?? "Sin asignar"}
           </span>
         </div>
-        <div>
+        {/* Estado certificado select (functional — saves via PATCH) */}
+        <div style={{ marginBottom: "0.01rem" }}>
           <span style={labelStyle}>Estado certificado: </span>
-          <span style={valueStyle}>{detail.estado_certificado ?? "-"}</span>
+          <select
+            disabled={isBlocked || terminal || !can("EDITAR_DATOS")}
+            value={detail.estado_certificado ?? ""}
+            style={{
+              ...inputStyle,
+              maxWidth: 200,
+              display: "inline-block",
+              width: "auto",
+              opacity: (isBlocked || terminal || !can("EDITAR_DATOS")) ? 0.5 : 1,
+              cursor: (isBlocked || terminal || !can("EDITAR_DATOS")) ? "not-allowed" : "pointer",
+            }}
+            onChange={(e) => {
+              if (e.target.value) {
+                onSaveEstadoCertificado(e.target.value);
+              }
+            }}
+          >
+            <option value="">Sin definir</option>
+            <option value="APROBADO">APROBADO</option>
+            <option value="OBSERVADO">OBSERVADO</option>
+          </select>
+          {isBlocked && (
+            <div style={helperTextStyle}>
+              Disponible cuando el pago este registrado y el medico asignado.
+            </div>
+          )}
         </div>
       </div>
-
-      {/* Estado certificado select (functional — saves via PATCH) */}
-      <div style={{ marginBottom: "0.75rem" }}>
-        <span style={labelStyle}>Estado certificado: </span>
-        <select
-          disabled={isBlocked || terminal || !can("EDITAR_DATOS")}
-          value={detail.estado_certificado ?? ""}
-          style={{
-            ...inputStyle,
-            maxWidth: 200,
-            display: "inline-block",
-            width: "auto",
-            opacity: (isBlocked || terminal || !can("EDITAR_DATOS")) ? 0.5 : 1,
-            cursor: (isBlocked || terminal || !can("EDITAR_DATOS")) ? "not-allowed" : "pointer",
-          }}
-          onChange={(e) => {
-            if (e.target.value) {
-              onSaveEstadoCertificado(e.target.value);
-            }
-          }}
-        >
-          <option value="">Sin definir</option>
-          <option value="APROBADO">APROBADO</option>
-          <option value="OBSERVADO">OBSERVADO</option>
-        </select>
-        {isBlocked && (
-          <div style={helperTextStyle}>
-            Disponible cuando el pago este registrado y el medico asignado.
-          </div>
-        )}
-      </div>
-
-      {/* Resultados medicos table (always visible) */}
-      {detail.resultados_medicos.length > 0 ? (
-        <div style={{ overflowX: "auto", marginBottom: "0.75rem" }}>
-          <table style={tableStyle}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Fecha</th>
-                <th style={thStyle}>Diagnostico</th>
-                <th style={thStyle}>Resultado</th>
-                <th style={thStyle}>Observaciones</th>
-                <th style={thStyle}>Certificado</th>
-              </tr>
-            </thead>
-            <tbody>
-              {detail.resultados_medicos.map((rm) => (
-                <tr key={rm.resultado_id} style={trStyle}>
-                  <td style={tdStyle}>{rm.fecha_evaluacion ?? "-"}</td>
-                  <td style={tdStyle}>{rm.diagnostico ?? "-"}</td>
-                  <td style={tdStyle}>{rm.resultado ?? "-"}</td>
-                  <td style={tdStyle}>{rm.observaciones ?? "-"}</td>
-                  <td style={tdStyle}>{rm.estado_certificado ?? "-"}</td>
-                </tr>
-              ))}
-            </tbody>
-          </table>
-        </div>
-      ) : (
-        <p style={emptyTextStyle}>Sin resultados medicos registrados.</p>
-      )}
-
-      {/* Observaciones from latest resultado */}
-      {lastResultado?.observaciones && (
-        <div style={{ marginBottom: "0.75rem" }}>
-          <span style={labelStyle}>Observaciones: </span>
-          <span style={valueStyle}>{lastResultado.observaciones}</span>
-        </div>
-      )}
 
       {/* Actions row */}
       <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "flex-start" }}>
@@ -155,24 +131,40 @@ export default function BlockEvaluacion({
 
         {/* Cerrar solicitud */}
         {can("CERRAR") ? (
-          <button onClick={() => onOpenModal("cerrar")} style={actionBtnStyle("#0d9488")}>
+          <button onClick={handleCerrarClick} style={actionBtnStyle("#0d9488")}>
             Cerrar solicitud
           </button>
         ) : (
           <div>
             <button disabled style={disabledBtnStyle()}>Cerrar solicitud</button>
             <div style={helperTextStyle}>
-              {state === "blocked"
-                ? "Requiere evaluacion medica."
-                : state === "pending"
-                  ? "Falta asignar medico."
-                  : detail.estado_operativo === "CERRADO"
-                    ? "Ya cerrada."
-                    : terminal ? "Solicitud cancelada." : "No disponible."}
+              {detail.estado_operativo === "CERRADO"
+                ? "Ya cerrada."
+                : terminal ? "Solicitud cancelada." : "No disponible en este momento."}
             </div>
           </div>
         )}
       </div>
+
+      {/* Mensaje de requisitos faltantes para cerrar */}
+      {cerrarFaltantes.length > 0 && (
+        <div style={{
+          marginTop: "0.75rem",
+          padding: "0.75rem 1rem",
+          background: "#fff3cd",
+          border: "1px solid #ffc107",
+          borderRadius: 6,
+          fontSize: "0.85rem",
+          color: "#856404",
+        }}>
+          <strong>No se puede cerrar aun. Falta:</strong>
+          <ul style={{ margin: "0.35rem 0 0", paddingLeft: "1.25rem" }}>
+            {cerrarFaltantes.map((f) => (
+              <li key={f}>{f}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Inline modal: Asignar/Cambiar medico */}
       {(activeModal === "asignar_medico" || activeModal === "cambiar_medico") && (
@@ -235,3 +227,48 @@ export default function BlockEvaluacion({
     </div>
   );
 }
+
+
+
+
+{/*
+      <!-- Resultados medicos table (always visible) -->
+      {detail.resultados_medicos.length > 0 ? (
+        <div style={{ overflowX: "auto", marginBottom: "0.05rem" }}>
+          <table style={tableStyle}>
+            <thead>
+              <tr>
+                <th style={thStyle}>Fecha</th>
+                <th style={thStyle}>Diagnostico</th>
+                <th style={thStyle}>Resultado</th>
+                <th style={thStyle}>Observaciones</th>
+                <th style={thStyle}>Certificado</th>
+              </tr>
+            </thead>
+            <tbody>
+              {detail.resultados_medicos.map((rm) => (
+                <tr key={rm.resultado_id} style={trStyle}>
+                  <td style={tdStyle}>{rm.fecha_evaluacion ?? "-"}</td>
+                  <td style={tdStyle}>{rm.diagnostico ?? "-"}</td>
+                  <td style={tdStyle}>{rm.resultado ?? "-"}</td>
+                  <td style={tdStyle}>{rm.observaciones ?? "-"}</td>
+                  <td style={tdStyle}>{rm.estado_certificado ?? "-"}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div style={{ ...emptyTextStyle, marginBottom: "0.05rem" }}>
+          No hay resultados medicos registrados.
+        </div>
+      )}
+
+      <!== Observaciones from latest resultado -->
+      {lastResultado?.observaciones && (
+        <div style={{ marginBottom: "0.05rem" }}>
+          <span style={labelStyle}>Observaciones: </span>
+          <span style={valueStyle}>{lastResultado.observaciones}</span>
+        </div>
+      )}
+ */}

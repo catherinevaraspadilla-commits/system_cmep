@@ -19,7 +19,7 @@ const estadoColor: Record<EstadoOperativo, string> = {
   PAGADO: "#198754",
   ASIGNADO_MEDICO: "#6f42c1",
   CERRADO: "#0d9488",
-  CANCELADO: "#dc3545",
+  CANCELADO: "#6c757d",
 };
 
 /* ── Role descriptions (plain language) ── */

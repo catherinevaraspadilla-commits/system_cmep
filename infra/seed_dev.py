@@ -134,17 +134,7 @@ SEED_PROMOTORES = [
 
 SEED_SERVICIOS = [
     {
-        "descripcion_servicio": "Certificado Medico de Evaluacion Profesional - Presencial",
-        "tarifa_servicio": Decimal("150.00"),
-        "moneda_tarifa": "PEN",
-    },
-    {
-        "descripcion_servicio": "Certificado Medico de Evaluacion Profesional - Virtual",
-        "tarifa_servicio": Decimal("120.00"),
-        "moneda_tarifa": "PEN",
-    },
-    {
-        "descripcion_servicio": "Certificado Medico de Salud Mental",
+        "descripcion_servicio": "Certificado Medico de Evaluacion Profesional",
         "tarifa_servicio": Decimal("200.00"),
         "moneda_tarifa": "PEN",
     },

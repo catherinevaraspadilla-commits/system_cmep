@@ -334,8 +334,8 @@ async def test_registrar_pago_operador_forbidden():
 # ── ASIGNAR MEDICO ──
 
 @pytest.mark.asyncio
-async def test_asignar_medico_requires_pagado():
-    """ASIGNAR_MEDICO sin pago previo retorna 422."""
+async def test_asignar_medico_allowed_without_pago():
+    """ASIGNAR_MEDICO is allowed in ASIGNADO_GESTOR (without pago)."""
     transport = ASGITransport(app=app)
     async with AsyncClient(transport=transport, base_url="http://test") as client:
         sol_id = await _create_solicitud(client)
@@ -347,15 +347,13 @@ async def test_asignar_medico_requires_pagado():
             cookies=_cookies("test-admin-session"),
         )
 
-        # Try asignar medico — should fail because not PAGADO yet
-        # Note: POLICY allows ASIGNAR_MEDICO only in PAGADO
+        # Asignar medico — now allowed even without pago
         resp = await client.post(
             f"/solicitudes/{sol_id}/asignar-medico",
             json={"persona_id_medico": _medico_persona_id},
             cookies=_cookies("test-admin-session"),
         )
-        # POLICY blocks: ADMIN in ASIGNADO_GESTOR doesn't have ASIGNAR_MEDICO
-        assert resp.status_code == 403
+        assert resp.status_code == 200
 
 
 # ── CANCELAR ──

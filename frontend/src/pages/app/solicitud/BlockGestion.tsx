@@ -1,3 +1,4 @@
+import { useState } from "react";
 import type { SolicitudDetailDTO } from "../../../types/solicitud";
 import { getGestionState, isTerminal } from "./detailHelpers";
 import {
@@ -18,16 +19,37 @@ interface BlockGestionProps {
   onOpenModal: (modal: "asignar_gestor" | "cambiar_gestor") => void;
   onCloseModal: () => void;
   onExecuteAction: (endpoint: string, payload: unknown) => void;
-  onOpenCancelModal: () => void;
+  onSaveTipoLugar: (tipo_atencion: string, lugar_atencion: string) => Promise<void>;
 }
 
 export default function BlockGestion({
   detail, can, activeModal, gestores, personaId, onPersonaIdChange,
   actionLoading, onOpenModal, onCloseModal, onExecuteAction,
-  onOpenCancelModal,
+  onSaveTipoLugar,
 }: BlockGestionProps) {
   const state = getGestionState(detail);
   const terminal = isTerminal(detail);
+
+  const [editingTipoLugar, setEditingTipoLugar] = useState(false);
+  const [tipoAtencion, setTipoAtencion] = useState(detail.tipo_atencion ?? "");
+  const [lugarAtencion, setLugarAtencion] = useState(detail.lugar_atencion ?? "");
+  const [savingTipoLugar, setSavingTipoLugar] = useState(false);
+
+  const startEditTipoLugar = () => {
+    setTipoAtencion(detail.tipo_atencion ?? "");
+    setLugarAtencion(detail.lugar_atencion ?? "");
+    setEditingTipoLugar(true);
+  };
+
+  const handleSaveTipoLugar = async () => {
+    setSavingTipoLugar(true);
+    try {
+      await onSaveTipoLugar(tipoAtencion, lugarAtencion);
+      setEditingTipoLugar(false);
+    } finally {
+      setSavingTipoLugar(false);
+    }
+  };
 
   return (
     <div style={blockStyle(state)}>
@@ -48,7 +70,53 @@ export default function BlockGestion({
           <span style={labelStyle}>Estado atencion: </span>
           <span style={valueStyle}>{detail.estado_atencion}</span>
         </div>
+        <div>
+          <span style={labelStyle}>Tipo atencion: </span>
+          <span style={valueStyle}>{detail.tipo_atencion ?? "-"}</span>
+        </div>
+        <div>
+          <span style={labelStyle}>Lugar atencion: </span>
+          <span style={valueStyle}>{detail.lugar_atencion ?? "-"}</span>
+        </div>
       </div>
+
+      {/* Inline edit: Tipo/Lugar atencion */}
+      {!editingTipoLugar && can("EDITAR_DATOS") && !terminal && (
+        <div style={{ marginBottom: "0.75rem" }}>
+          <button onClick={startEditTipoLugar} style={actionBtnStyle("#6c757d")}>
+            Editar tipo/lugar atencion
+          </button>
+        </div>
+      )}
+      {editingTipoLugar && (
+        <div style={{
+          marginBottom: "0.75rem", padding: "0.75rem",
+          background: "rgba(255,255,255,0.7)", borderRadius: 6, border: "1px solid #9ec5fe",
+        }}>
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+            <div>
+              <label style={labelStyle}>Tipo atencion</label>
+              <select value={tipoAtencion} onChange={(e) => setTipoAtencion(e.target.value)} style={inputStyle}>
+                <option value="">Sin definir</option>
+                <option value="VIRTUAL">VIRTUAL</option>
+                <option value="PRESENCIAL">PRESENCIAL</option>
+              </select>
+            </div>
+            <div>
+              <label style={labelStyle}>Lugar atencion</label>
+              <input value={lugarAtencion} onChange={(e) => setLugarAtencion(e.target.value)}
+                placeholder="Ej: Consultorio Lima Norte" style={inputStyle} />
+            </div>
+          </div>
+          <div style={{ display: "flex", gap: "0.5rem", marginTop: "0.5rem" }}>
+            <button disabled={savingTipoLugar} onClick={handleSaveTipoLugar}
+              style={actionBtnStyle(savingTipoLugar ? "#6c757d" : "#198754")}>
+              {savingTipoLugar ? "Guardando..." : "Guardar"}
+            </button>
+            <button onClick={() => setEditingTipoLugar(false)} style={cancelBtnStyle}>Cancelar</button>
+          </div>
+        </div>
+      )}
 
       {/* Actions row */}
       <div style={{ display: "flex", gap: "0.5rem", flexWrap: "wrap", alignItems: "flex-start" }}>
@@ -71,19 +139,6 @@ export default function BlockGestion({
           </div>
         )}
 
-        {/* Cancelar solicitud */}
-        {can("CANCELAR") ? (
-          <button onClick={onOpenCancelModal} style={actionBtnStyle("#dc3545")}>
-            Cancelar solicitud
-          </button>
-        ) : (
-          <div>
-            <button disabled style={disabledBtnStyle()}>Cancelar solicitud</button>
-            <div style={helperTextStyle}>
-              {terminal ? "Solicitud ya finalizada." : "No disponible."}
-            </div>
-          </div>
-        )}
       </div>
 
       {/* Inline modal: Asignar/Cambiar gestor */}

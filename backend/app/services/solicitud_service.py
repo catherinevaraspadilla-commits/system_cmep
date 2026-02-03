@@ -22,6 +22,7 @@ from app.models.solicitud import (
     SolicitudEstadoHistorial,
     PagoSolicitud,
 )
+from app.models.user import User
 from app.services.estado_operativo import derivar_estado_operativo
 from app.services.policy import get_acciones_permitidas, assert_allowed
 from app.utils.time import utcnow
@@ -30,6 +31,21 @@ from app.utils.time import utcnow
 def _enum_val(v):
     """Extract .value from enum members (e.g. TipoDocumento.DNI -> 'DNI')."""
     return v.value if hasattr(v, "value") else v
+
+
+async def resolve_historial_user_names(
+    db: AsyncSession, solicitud: SolicitudCmep
+) -> dict[int, str]:
+    """Build a dict of user_id -> full name for all users in historial."""
+    user_ids = {h.cambiado_por for h in solicitud.historial if h.cambiado_por}
+    if not user_ids:
+        return {}
+    rows = (await db.execute(
+        select(User.user_id, Persona.nombres, Persona.apellidos)
+        .join(Persona, User.persona_id == Persona.persona_id)
+        .where(User.user_id.in_(user_ids))
+    )).all()
+    return {r.user_id: f"{r.nombres} {r.apellidos}" for r in rows}
 
 
 async def find_or_create_persona(
@@ -403,7 +419,11 @@ async def list_solicitudes(
     return items, total
 
 
-def build_detail_dto(solicitud: SolicitudCmep, user_roles: list[str]) -> dict:
+def build_detail_dto(
+    solicitud: SolicitudCmep,
+    user_roles: list[str],
+    user_names: dict[int, str] | None = None,
+) -> dict:
     """Construye el DTO de detalle completo de una solicitud."""
     estado_op = _get_estado_operativo_for_solicitud(solicitud)
     acciones = get_acciones_permitidas(user_roles, estado_op)
@@ -457,6 +477,7 @@ def build_detail_dto(solicitud: SolicitudCmep, user_roles: list[str]) -> dict:
                 "monto": str(p.monto),
                 "moneda": p.moneda,
                 "referencia_transaccion": p.referencia_transaccion,
+                "comentario": p.comentario,
                 "validated_at": p.validated_at.isoformat() if p.validated_at else None,
             }
             for p in solicitud.pagos
@@ -480,6 +501,7 @@ def build_detail_dto(solicitud: SolicitudCmep, user_roles: list[str]) -> dict:
                 "valor_anterior": h.valor_anterior,
                 "valor_nuevo": h.valor_nuevo,
                 "cambiado_por": h.cambiado_por,
+                "usuario_nombre": (user_names or {}).get(h.cambiado_por) if h.cambiado_por else None,
                 "cambiado_en": h.cambiado_en.isoformat() if h.cambiado_en else None,
                 "comentario": h.comentario,
             }
@@ -608,6 +630,7 @@ async def registrar_pago(
     moneda: str,
     referencia_transaccion: str | None,
     user_id: int,
+    comentario: str | None = None,
 ) -> PagoSolicitud:
     """
     Registrar pago + validar + actualizar estado_pago.
@@ -622,6 +645,7 @@ async def registrar_pago(
         monto=monto,
         moneda=moneda,
         referencia_transaccion=referencia_transaccion,
+        comentario=comentario,
         validated_by=user_id,
         validated_at=now,
         created_by=user_id,
@@ -634,7 +658,7 @@ async def registrar_pago(
         solicitud_id=solicitud.solicitud_id,
         campo="pago_registrado",
         valor_anterior=None,
-        valor_nuevo=str(pago.pago_id),
+        valor_nuevo=str(pago.monto),
         cambiado_por=user_id,
         cambiado_en=now,
     ))
@@ -672,6 +696,19 @@ async def cerrar_solicitud(
     if solicitud.estado_atencion == "CANCELADO":
         raise HTTPException(status_code=409, detail={
             "ok": False, "error": {"code": "CONFLICT", "message": "Solicitud ya esta CANCELADA"}
+        })
+
+    # Validar que exista al menos un pago registrado
+    if not solicitud.pagos or len(solicitud.pagos) == 0:
+        raise HTTPException(status_code=409, detail={
+            "ok": False, "error": {"code": "CONFLICT", "message": "Debe existir al menos un pago registrado para cerrar la solicitud"}
+        })
+
+    # Validar que haya medico asignado vigente
+    vigentes = _get_asignaciones_vigentes(solicitud)
+    if not vigentes.get("MEDICO"):
+        raise HTTPException(status_code=409, detail={
+            "ok": False, "error": {"code": "CONFLICT", "message": "Debe haber un medico asignado para cerrar la solicitud"}
         })
 
     now = utcnow()

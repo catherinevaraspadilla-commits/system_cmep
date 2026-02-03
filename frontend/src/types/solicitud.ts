@@ -44,6 +44,7 @@ export interface PagoDTO {
   monto: number;
   moneda: string;
   referencia_transaccion: string | null;
+  comentario: string | null;
   validated_at: string | null;
 }
 
@@ -63,6 +64,7 @@ export interface HistorialDTO {
   valor_anterior: string | null;
   valor_nuevo: string | null;
   cambiado_por: number | null;
+  usuario_nombre: string | null;
   cambiado_en: string;
   comentario: string | null;
 }
