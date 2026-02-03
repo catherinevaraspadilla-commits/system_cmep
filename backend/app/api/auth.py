@@ -8,6 +8,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, Request
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
+from app.config import settings
 from app.database import get_db
 from app.models.user import User, EstadoUser
 from app.models.persona import Persona
@@ -60,15 +61,22 @@ async def login(
         user_dto["display_name"] = f"{persona.nombres} {persona.apellidos}"
 
     # Cookie httpOnly (R-001: CORS seguro)
-    response.set_cookie(
-        key=SESSION_COOKIE_NAME,
-        value=session.session_id,
-        httponly=True,
-        samesite="lax",
-        secure=False,  # True en produccion
-        max_age=86400,
-        path="/",
-    )
+    cookie_kwargs: dict = {
+        "key": SESSION_COOKIE_NAME,
+        "value": session.session_id,
+        "httponly": True,
+        "max_age": 86400,
+        "path": "/",
+    }
+    if settings.is_prod:
+        cookie_kwargs["secure"] = True
+        cookie_kwargs["samesite"] = "none"
+        if settings.COOKIE_DOMAIN:
+            cookie_kwargs["domain"] = settings.COOKIE_DOMAIN
+    else:
+        cookie_kwargs["secure"] = False
+        cookie_kwargs["samesite"] = "lax"
+    response.set_cookie(**cookie_kwargs)
 
     return {"ok": True, "data": {"user": user_dto}}
 
