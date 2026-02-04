@@ -33,9 +33,11 @@ from app.services.solicitud_service import (
     registrar_pago,
     cerrar_solicitud,
     cancelar_solicitud,
+    eliminar_solicitud,
     _compute_estado_op,
 )
 from app.services.policy import assert_allowed
+from app.services.admin_service import require_admin
 from app.services.estado_operativo import derivar_estado_operativo
 from app.models.solicitud import SolicitudEstadoHistorial
 from app.utils.time import utcnow
@@ -64,6 +66,7 @@ async def crear_solicitud(
         celular=body.cliente.celular,
         email=body.cliente.email,
         fecha_nacimiento=body.cliente.fecha_nacimiento,
+        direccion=body.cliente.direccion,
         created_by=user_id,
     )
 
@@ -77,6 +80,9 @@ async def crear_solicitud(
             nombres=body.apoderado.nombres,
             apellidos=body.apoderado.apellidos,
             celular=body.apoderado.celular,
+            email=body.apoderado.email,
+            fecha_nacimiento=body.apoderado.fecha_nacimiento,
+            direccion=body.apoderado.direccion,
             created_by=user_id,
         )
 
@@ -223,6 +229,8 @@ async def editar_solicitud(
         "cliente_apellidos": "apellidos",
         "cliente_celular": "celular_1",
         "cliente_email": "email",
+        "cliente_fecha_nacimiento": "fecha_nacimiento",
+        "cliente_direccion": "direccion",
     }
     if solicitud.cliente and solicitud.cliente.persona:
         persona = solicitud.cliente.persona
@@ -235,6 +243,31 @@ async def editar_solicitud(
                     db.add(SolicitudEstadoHistorial(
                         solicitud_id=solicitud_id,
                         campo=f"cliente.{persona_field}",
+                        valor_anterior=str(old_value) if old_value is not None else None,
+                        valor_nuevo=str(new_value) if new_value is not None else None,
+                        cambiado_por=current_user.user_id,
+                        cambiado_en=now,
+                    ))
+
+    # Campos del apoderado (via relacion)
+    apoderado_field_map = {
+        "apoderado_nombres": "nombres",
+        "apoderado_apellidos": "apellidos",
+        "apoderado_celular": "celular_1",
+        "apoderado_email": "email",
+        "apoderado_fecha_nacimiento": "fecha_nacimiento",
+        "apoderado_direccion": "direccion",
+    }
+    if solicitud.apoderado:
+        for req_field, persona_field in apoderado_field_map.items():
+            if req_field in changes:
+                old_value = getattr(solicitud.apoderado, persona_field)
+                new_value = changes[req_field]
+                if str(old_value) != str(new_value):
+                    setattr(solicitud.apoderado, persona_field, new_value)
+                    db.add(SolicitudEstadoHistorial(
+                        solicitud_id=solicitud_id,
+                        campo=f"apoderado.{persona_field}",
                         valor_anterior=str(old_value) if old_value is not None else None,
                         valor_nuevo=str(new_value) if new_value is not None else None,
                         cambiado_por=current_user.user_id,
@@ -434,6 +467,20 @@ async def action_cancelar(
 
     detail = await _reload_and_detail(db, solicitud_id, user_roles)
     return {"ok": True, "data": detail}
+
+
+# ── DELETE /solicitudes/{id} (solo ADMIN) ─────────────────────────────
+
+@router.delete("/{solicitud_id}")
+async def eliminar_solicitud_endpoint(
+    solicitud_id: int,
+    db: AsyncSession = Depends(get_db),
+    admin: User = Depends(require_admin),
+):
+    """Eliminar solicitud y todas sus entidades dependientes (solo ADMIN)."""
+    solicitud = await _load_solicitud_or_404(db, solicitud_id)
+    await eliminar_solicitud(db, solicitud)
+    return {"ok": True}
 
 
 # ── POST /solicitudes/{id}/override ───────────────────────────────────

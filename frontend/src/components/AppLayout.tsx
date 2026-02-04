@@ -61,6 +61,9 @@ export default function AppLayout({ user, onLogout }: Props) {
             <NavLink to="/app/solicitudes" style={({ isActive }) => navLinkStyle(isActive)}>
               Solicitudes
             </NavLink>
+            <NavLink to="/app/promotores" style={({ isActive }) => navLinkStyle(isActive)}>
+              Promotores
+            </NavLink>
             {isAdmin && (
               <>
                 <NavLink to="/app/usuarios" style={({ isActive }) => navLinkStyle(isActive)}>

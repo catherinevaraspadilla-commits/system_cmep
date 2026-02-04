@@ -49,6 +49,12 @@ def _build_user_dto(user: User, persona: Persona) -> dict:
         "tipo_documento": persona.tipo_documento,
         "numero_documento": persona.numero_documento,
         "telefono": persona.celular_1,
+        "email": persona.email,
+        "celular_2": persona.celular_2,
+        "telefono_fijo": persona.telefono_fijo,
+        "fecha_nacimiento": persona.fecha_nacimiento,
+        "direccion": persona.direccion,
+        "comentario": persona.comentario,
         "roles": [r.user_role for r in user.roles],
         "created_at": user.created_at.isoformat() if user.created_at else None,
     }
@@ -129,6 +135,10 @@ async def create_user(db: AsyncSession, data: CreateUserRequest, admin_user_id: 
         persona.apellidos = data.apellidos
         if data.telefono:
             persona.celular_1 = data.telefono
+        if data.direccion is not None:
+            persona.direccion = data.direccion
+        if data.fecha_nacimiento is not None:
+            persona.fecha_nacimiento = data.fecha_nacimiento
     else:
         persona = Persona(
             tipo_documento=data.tipo_documento,
@@ -137,6 +147,8 @@ async def create_user(db: AsyncSession, data: CreateUserRequest, admin_user_id: 
             apellidos=data.apellidos,
             email=normalized_email,
             celular_1=data.telefono,
+            direccion=data.direccion,
+            fecha_nacimiento=data.fecha_nacimiento,
             created_by=admin_user_id,
         )
         db.add(persona)
@@ -221,6 +233,23 @@ async def update_user(
         persona.apellidos = data.apellidos
     if data.telefono is not None:
         persona.celular_1 = data.telefono
+    if data.email is not None:
+        persona.email = data.email
+    if data.celular_2 is not None:
+        persona.celular_2 = data.celular_2
+    if data.telefono_fijo is not None:
+        persona.telefono_fijo = data.telefono_fijo
+    if data.fecha_nacimiento is not None:
+        persona.fecha_nacimiento = data.fecha_nacimiento
+    if data.direccion is not None:
+        persona.direccion = data.direccion
+    if data.tipo_documento is not None:
+        persona.tipo_documento = data.tipo_documento
+    if data.numero_documento is not None:
+        persona.numero_documento = data.numero_documento
+    if data.comentario is not None:
+        persona.comentario = data.comentario
+    persona.updated_by = admin_user_id
 
     # Actualizar roles (delete + recreate)
     if data.roles is not None:

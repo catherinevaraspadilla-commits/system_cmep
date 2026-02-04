@@ -3,7 +3,7 @@ Schemas Pydantic para administracion de usuarios (M5).
 Ref: docs/claude/02_module_specs.md (M5)
 """
 
-from datetime import datetime
+from datetime import datetime, date
 from pydantic import BaseModel, Field
 
 
@@ -17,6 +17,8 @@ class CreateUserRequest(BaseModel):
     tipo_documento: str = Field(..., pattern="^(DNI|CE|PASAPORTE)$")
     numero_documento: str = Field(..., min_length=1, max_length=30)
     telefono: str | None = None
+    direccion: str | None = None
+    fecha_nacimiento: date | None = None
     roles: list[str] = Field(..., min_length=1)
 
 
@@ -24,6 +26,14 @@ class UpdateUserRequest(BaseModel):
     nombres: str | None = None
     apellidos: str | None = None
     telefono: str | None = None
+    email: str | None = None
+    celular_2: str | None = None
+    telefono_fijo: str | None = None
+    fecha_nacimiento: date | None = None
+    direccion: str | None = None
+    tipo_documento: str | None = None
+    numero_documento: str | None = None
+    comentario: str | None = None
     roles: list[str] | None = None
     is_active: bool | None = None
 
@@ -44,6 +54,12 @@ class AdminUserDTO(BaseModel):
     tipo_documento: str | None = None
     numero_documento: str | None = None
     telefono: str | None = None
+    email: str | None = None
+    celular_2: str | None = None
+    telefono_fijo: str | None = None
+    fecha_nacimiento: date | None = None
+    direccion: str | None = None
+    comentario: str | None = None
     roles: list[str]
     created_at: datetime
 

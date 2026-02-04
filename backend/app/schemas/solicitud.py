@@ -18,6 +18,7 @@ class ClienteInput(BaseModel):
     celular: str | None = None
     fecha_nacimiento: date | None = None
     email: str | None = None
+    direccion: str | None = None
 
 
 class ApoderadoInput(BaseModel):
@@ -26,6 +27,9 @@ class ApoderadoInput(BaseModel):
     nombres: str = Field(..., min_length=1, max_length=150)
     apellidos: str = Field(..., min_length=1, max_length=150)
     celular: str | None = None
+    fecha_nacimiento: date | None = None
+    direccion: str | None = None
+    email: str | None = None
 
 
 class PromotorInput(BaseModel):
@@ -93,6 +97,15 @@ class EditSolicitudRequest(BaseModel):
     cliente_apellidos: str | None = None
     cliente_celular: str | None = None
     cliente_email: str | None = None
+    cliente_fecha_nacimiento: date | None = None
+    cliente_direccion: str | None = None
+    # Apoderado editable
+    apoderado_nombres: str | None = None
+    apoderado_apellidos: str | None = None
+    apoderado_celular: str | None = None
+    apoderado_email: str | None = None
+    apoderado_fecha_nacimiento: date | None = None
+    apoderado_direccion: str | None = None
 
 
 # ── M3: Action request schemas ───────────────────────────────────────

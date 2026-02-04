@@ -21,6 +21,7 @@ import SolicitudNueva from "./pages/app/SolicitudNueva";
 import SolicitudDetalle from "./pages/app/SolicitudDetalle";
 import UsuariosLista from "./pages/app/UsuariosLista";
 import ReportesAdmin from "./pages/app/ReportesAdmin";
+import PromotoresLista from "./pages/app/PromotoresLista";
 import { AuthProvider, useAuth } from "./hooks/useAuth";
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -45,7 +46,8 @@ function AppRoutes() {
   return (
     <Routes>
       {/* Publicas */}
-      <Route path="/" element={<Status />} />
+      <Route path="/" element={<Navigate to={user ? "/app" : "/login"} replace />} />
+      <Route path="/status" element={<Status />} />
       <Route
         path="/login"
         element={user ? <Navigate to="/app" replace /> : <Login />}
@@ -56,7 +58,7 @@ function AppRoutes() {
         path="/app"
         element={
           <PrivateRoute>
-            {user && <AppLayout user={user} onLogout={logout} />}
+             <AppLayout user={user!} onLogout={logout} />
           </PrivateRoute>
         }
       >
@@ -64,6 +66,7 @@ function AppRoutes() {
         <Route path="solicitudes" element={<SolicitudesLista />} />
         <Route path="solicitudes/nueva" element={<SolicitudNueva />} />
         <Route path="solicitudes/:id" element={<SolicitudDetalle />} />
+        <Route path="promotores" element={<PromotoresLista />} />
         <Route path="usuarios" element={<UsuariosLista />} />
         <Route path="reportes-admin" element={<ReportesAdmin />} />
       </Route>

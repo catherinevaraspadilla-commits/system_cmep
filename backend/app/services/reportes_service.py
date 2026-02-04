@@ -25,6 +25,7 @@ from app.models.solicitud import (
 from app.models.promotor import Promotor
 from app.models.persona import Persona
 from app.models.cliente import Cliente
+from app.config import settings
 
 
 # ── Estado operativo como expresion SQL ──────────────────────────────
@@ -65,13 +66,24 @@ def _estado_operativo_sql():
 
 # ── Helpers de periodo ───────────────────────────────────────────────
 
-def _periodo_expr(agrupacion: str):
+def _format_periodo(col, agrupacion: str):
     """Expresion SQL para agrupar por periodo (compatible SQLite y MySQL)."""
+    if settings.is_sqlite:
+        fmt = "%Y-W%W" if agrupacion == "semanal" else "%Y-%m"
+        return func.strftime(fmt, col).label("periodo")
+    # MySQL
     if agrupacion == "semanal":
-        # SQLite: strftime, MySQL: DATE_FORMAT — usamos strftime (SQLite dev)
-        return func.strftime("%Y-W%W", SolicitudCmep.created_at).label("periodo")
-    # mensual (default)
-    return func.strftime("%Y-%m", SolicitudCmep.created_at).label("periodo")
+        return func.concat(
+            func.date_format(col, "%Y"),
+            literal("-W"),
+            func.lpad(func.week(col, 1), 2, "0"),
+        ).label("periodo")
+    return func.date_format(col, "%Y-%m").label("periodo")
+
+
+def _periodo_expr(agrupacion: str):
+    """Periodo sobre SolicitudCmep.created_at."""
+    return _format_periodo(SolicitudCmep.created_at, agrupacion)
 
 
 # ── Servicio principal ───────────────────────────────────────────────
@@ -184,10 +196,7 @@ async def generar_reporte(
             .where(base_filter)
             .subquery()
         )
-        periodo_sub = func.strftime(
-            "%Y-W%W" if agrupacion == "semanal" else "%Y-%m",
-            sub_series.c.created_at,
-        ).label("periodo")
+        periodo_sub = _format_periodo(sub_series.c.created_at, agrupacion)
         series_sol_stmt = (
             select(periodo_sub, func.count().label("solicitudes"))
             .select_from(sub_series)
@@ -198,10 +207,7 @@ async def generar_reporte(
     sol_rows = (await db.execute(series_sol_stmt)).all()
 
     # Series de ingresos (pagos validados agrupados por periodo)
-    pago_periodo = func.strftime(
-        "%Y-W%W" if agrupacion == "semanal" else "%Y-%m",
-        PagoSolicitud.fecha_pago,
-    ).label("periodo")
+    pago_periodo = _format_periodo(PagoSolicitud.fecha_pago, agrupacion)
     series_ing_stmt = (
         select(pago_periodo, func.coalesce(func.sum(PagoSolicitud.monto), 0).label("ingresos"))
         .where(

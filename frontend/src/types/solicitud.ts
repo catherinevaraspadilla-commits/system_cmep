@@ -19,6 +19,9 @@ export interface ClienteDTO {
   doc: string;
   nombre: string;
   celular: string | null;
+  email: string | null;
+  fecha_nacimiento: string | null;
+  direccion: string | null;
 }
 
 export interface PersonaDTO {
@@ -29,6 +32,8 @@ export interface PersonaDTO {
   apellidos: string;
   celular_1: string | null;
   email: string | null;
+  fecha_nacimiento: string | null;
+  direccion: string | null;
 }
 
 export interface AsignacionVigenteDTO {
@@ -138,6 +143,7 @@ export interface ClienteInput {
   celular?: string;
   fecha_nacimiento?: string;
   email?: string;
+  direccion?: string;
 }
 
 export interface ApoderadoInput {
@@ -146,6 +152,9 @@ export interface ApoderadoInput {
   nombres: string;
   apellidos: string;
   celular?: string;
+  fecha_nacimiento?: string;
+  direccion?: string;
+  email?: string;
 }
 
 export interface PromotorListItem {
@@ -199,6 +208,14 @@ export interface EditSolicitudRequest {
   cliente_apellidos?: string;
   cliente_celular?: string;
   cliente_email?: string;
+  cliente_fecha_nacimiento?: string;
+  cliente_direccion?: string;
+  apoderado_nombres?: string;
+  apoderado_apellidos?: string;
+  apoderado_celular?: string;
+  apoderado_email?: string;
+  apoderado_fecha_nacimiento?: string;
+  apoderado_direccion?: string;
 }
 
 /* Paginated list response shape */

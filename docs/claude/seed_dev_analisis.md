@@ -1,11 +1,12 @@
-# Seed de Produccion — Analisis Detallado y Riesgos
+# Seed de Desarrollo — Analisis Detallado y Riesgos
 
 > Archivo analizado: `infra/seed_dev.py`
 > Fecha: 2026-02-03
+> Decision tomada: Opcion A (separar scripts) — se creo `infra/seed_prod.py`
 
 ---
 
-## 1. Que hace el seed actual
+## 1. Que hace el seed de desarrollo
 
 ### Flujo de ejecucion
 
@@ -27,7 +28,7 @@ seed_dev.py --mysql
 
 | Entidad | Cantidad | Detalle |
 |---------|----------|---------|
-| **Personas** | 10 | 5 usuarios + 3 clientes + 1 promotor persona + 1 implícita |
+| **Personas** | 10 | 5 usuarios + 3 clientes + 1 promotor persona + 1 implicita |
 | **Users** | 5 | admin, operador, gestor, medico, suspendido |
 | **UserRole** | 5 | 1 rol por usuario |
 | **Empleados** | 3 | operador, gestor, medico |
@@ -119,15 +120,6 @@ Clientes ficticios (Juan Perez DNI 12345678), promotores ficticios, y el usuario
 
 ---
 
-### RIESGO BAJO: No hay flag --prod ni confirmacion
-
-El seed no distingue entre dev y produccion. No hay confirmacion "estas seguro?" ni flag de proteccion. Un `python seed_dev.py --mysql` borra todo sin preguntar.
-
-**Severidad**: MEDIA (combinada con el riesgo de re-seed)
-**Probabilidad**: Media
-
----
-
 ## 3. Que NECESITA produccion vs que es solo dev
 
 | Dato | Necesario en PROD | Necesario en DEV |
@@ -142,40 +134,16 @@ El seed no distingue entre dev y produccion. No hay confirmacion "estas seguro?"
 
 ---
 
-## 4. Recomendacion
+## 4. Decision tomada
 
-### Opcion A: Separar en dos scripts (RECOMENDADO)
+Se eligio **Opcion A: Separar en dos scripts**:
 
-1. **`seed_dev.py`** (actual, sin cambios) — para desarrollo y testing local
-2. **`seed_prod.py`** (nuevo) — para produccion, solo lo minimo:
-   - 1 servicio
-   - 1 usuario admin con password segura (parametro obligatorio)
-   - Sin datos ficticios
-   - Sin DELETE destructivo
-   - Con confirmacion interactiva
+1. **`seed_dev.py`** (sin cambios) — para desarrollo y testing local
+2. **`seed_prod.py`** (nuevo) — para produccion:
+   - Solo 1 servicio + 1 admin con datos reales
+   - Password como parametro obligatorio (`--password`)
+   - Sin DELETE destructivo (aborta si ya hay datos)
+   - Con confirmacion interactiva ("si/no")
+   - Bloquea SQLite (solo MySQL)
 
-### Opcion B: Agregar flag --prod al seed actual
-
-Agregar modo `--prod` que:
-- Solo inserta servicio + admin
-- Requiere password como parametro
-- No borra datos existentes
-- Muestra confirmacion
-
-### Opcion C: Mantener como esta
-
-Usar el seed actual tal cual para produccion y despues:
-- Cambiar passwords manualmente via `/admin/usuarios/{id}/reset-password`
-- Eliminar usuario suspendido manualmente
-- Aceptar que hay datos ficticios en la BD
-
----
-
-## 5. Resumen de decision necesaria
-
-| Pregunta | Impacto |
-|----------|---------|
-| Quieres datos ficticios en produccion? | Si NO → necesitas seed_prod.py |
-| El admin de produccion puede tener password `admin123` inicialmente? | Si NO → password como parametro |
-| Necesitas proteccion contra re-seed accidental? | Si SI → agregar confirmacion o flag |
-| Los otros usuarios (operador, gestor, medico) existen en la vida real? | Si SI → incluirlos con datos reales |
+Ver documentacion de seed_prod: `docs/deployment/seed_prod.md`

@@ -121,8 +121,7 @@ export default function Inicio() {
           Bienvenido, {user.display_name}
         </h2>
         <p style={{ margin: 0, opacity: 0.9, fontSize: "0.95rem", lineHeight: 1.5 }}>
-          Sistema CMEP — Gestion de Certificados Medicos de Evaluacion Profesional.
-          Desde aqui puedes ver un resumen de tu trabajo y acceder a tus tareas.
+          Sistema CMEP — Gestion de Certificados Medicos de Salud Mental.
         </p>
       </div>
 

@@ -31,6 +31,12 @@ export default function UsuariosLista() {
   const [formTipoDoc, setFormTipoDoc] = useState("DNI");
   const [formNumeroDoc, setFormNumeroDoc] = useState("");
   const [formTelefono, setFormTelefono] = useState("");
+  const [formEmailPersona, setFormEmailPersona] = useState("");
+  const [formCelular2, setFormCelular2] = useState("");
+  const [formTelefonoFijo, setFormTelefonoFijo] = useState("");
+  const [formFechaNac, setFormFechaNac] = useState("");
+  const [formDireccion, setFormDireccion] = useState("");
+  const [formComentario, setFormComentario] = useState("");
   const [formRoles, setFormRoles] = useState<string[]>([]);
 
   // Permissions section
@@ -67,6 +73,12 @@ export default function UsuariosLista() {
     setFormTipoDoc("DNI");
     setFormNumeroDoc("");
     setFormTelefono("");
+    setFormEmailPersona("");
+    setFormCelular2("");
+    setFormTelefonoFijo("");
+    setFormFechaNac("");
+    setFormDireccion("");
+    setFormComentario("");
     setFormRoles([]);
   };
 
@@ -80,7 +92,15 @@ export default function UsuariosLista() {
     setEditingUser(user);
     setFormNombres(user.nombres);
     setFormApellidos(user.apellidos);
+    setFormTipoDoc(user.tipo_documento ?? "DNI");
+    setFormNumeroDoc(user.numero_documento ?? "");
     setFormTelefono(user.telefono ?? "");
+    setFormEmailPersona(user.email ?? "");
+    setFormCelular2(user.celular_2 ?? "");
+    setFormTelefonoFijo(user.telefono_fijo ?? "");
+    setFormFechaNac(user.fecha_nacimiento ?? "");
+    setFormDireccion(user.direccion ?? "");
+    setFormComentario(user.comentario ?? "");
     setFormRoles([...user.roles]);
     setActiveModal("edit");
   };
@@ -118,6 +138,8 @@ export default function UsuariosLista() {
         roles: formRoles,
       };
       if (formTelefono.trim()) payload.telefono = formTelefono.trim();
+      if (formDireccion.trim()) payload.direccion = formDireccion.trim();
+      if (formFechaNac) payload.fecha_nacimiento = formFechaNac;
 
       await api.post("/admin/usuarios", payload);
       setSuccess("Usuario creado exitosamente");
@@ -138,7 +160,15 @@ export default function UsuariosLista() {
       const payload: UpdateUserPayload = {};
       if (formNombres !== editingUser.nombres) payload.nombres = formNombres;
       if (formApellidos !== editingUser.apellidos) payload.apellidos = formApellidos;
+      if ((formTipoDoc || "") !== (editingUser.tipo_documento || "")) payload.tipo_documento = formTipoDoc;
+      if ((formNumeroDoc || "") !== (editingUser.numero_documento || "")) payload.numero_documento = formNumeroDoc;
       if ((formTelefono || "") !== (editingUser.telefono || "")) payload.telefono = formTelefono;
+      if ((formEmailPersona || "") !== (editingUser.email || "")) payload.email = formEmailPersona;
+      if ((formCelular2 || "") !== (editingUser.celular_2 || "")) payload.celular_2 = formCelular2;
+      if ((formTelefonoFijo || "") !== (editingUser.telefono_fijo || "")) payload.telefono_fijo = formTelefonoFijo;
+      if ((formFechaNac || "") !== (editingUser.fecha_nacimiento || "")) payload.fecha_nacimiento = formFechaNac || undefined;
+      if ((formDireccion || "") !== (editingUser.direccion || "")) payload.direccion = formDireccion;
+      if ((formComentario || "") !== (editingUser.comentario || "")) payload.comentario = formComentario;
       if (JSON.stringify(formRoles.sort()) !== JSON.stringify([...editingUser.roles].sort())) {
         payload.roles = formRoles;
       }
@@ -433,6 +463,23 @@ export default function UsuariosLista() {
                   />
                 </div>
                 <div>
+                  <label style={labelStyle}>Dirección</label>
+                  <input
+                    value={formDireccion}
+                    onChange={(e) => setFormDireccion(e.target.value)}
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
+                  <label style={labelStyle}>Fecha de Nacimiento</label>
+                  <input
+                    type="date"
+                    value={formFechaNac}
+                    onChange={(e) => setFormFechaNac(e.target.value)}
+                    style={inputStyle}
+                  />
+                </div>
+                <div>
                   <label style={labelStyle}>Roles *</label>
                   <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
                     {ALL_ROLES.map((role) => (
@@ -488,12 +535,91 @@ export default function UsuariosLista() {
                     />
                   </div>
                 </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+                  <div>
+                    <label style={labelStyle}>Tipo Doc</label>
+                    <select
+                      value={formTipoDoc}
+                      onChange={(e) => setFormTipoDoc(e.target.value)}
+                      style={inputStyle}
+                    >
+                      <option value="DNI">DNI</option>
+                      <option value="CE">CE</option>
+                      <option value="PASAPORTE">PASAPORTE</option>
+                    </select>
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Numero Doc</label>
+                    <input
+                      value={formNumeroDoc}
+                      onChange={(e) => setFormNumeroDoc(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+                  <div>
+                    <label style={labelStyle}>Telefono</label>
+                    <input
+                      value={formTelefono}
+                      onChange={(e) => setFormTelefono(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Celular 2</label>
+                    <input
+                      value={formCelular2}
+                      onChange={(e) => setFormCelular2(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+                  <div>
+                    <label style={labelStyle}>Telefono Fijo</label>
+                    <input
+                      value={formTelefonoFijo}
+                      onChange={(e) => setFormTelefonoFijo(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Email Personal</label>
+                    <input
+                      type="email"
+                      value={formEmailPersona}
+                      onChange={(e) => setFormEmailPersona(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
+                  <div>
+                    <label style={labelStyle}>Fecha de Nacimiento</label>
+                    <input
+                      type="date"
+                      value={formFechaNac}
+                      onChange={(e) => setFormFechaNac(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                  <div>
+                    <label style={labelStyle}>Direccion</label>
+                    <input
+                      value={formDireccion}
+                      onChange={(e) => setFormDireccion(e.target.value)}
+                      style={inputStyle}
+                    />
+                  </div>
+                </div>
                 <div>
-                  <label style={labelStyle}>Telefono</label>
-                  <input
-                    value={formTelefono}
-                    onChange={(e) => setFormTelefono(e.target.value)}
-                    style={inputStyle}
+                  <label style={labelStyle}>Comentario</label>
+                  <textarea
+                    value={formComentario}
+                    onChange={(e) => setFormComentario(e.target.value)}
+                    rows={2}
+                    style={{ ...inputStyle, resize: "vertical" }}
                   />
                 </div>
                 <div>

@@ -13,6 +13,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import { api } from "../../services/api";
 import type { ApiResponse } from "../../types/auth";
 import type { SolicitudDetailDTO, EditSolicitudRequest, EstadoOperativo } from "../../types/solicitud";
+import { useAuth } from "../../hooks/useAuth";
 import WorkflowStepper from "../../components/WorkflowStepper";
 import BlockGestion from "./solicitud/BlockGestion";
 import BlockPago from "./solicitud/BlockPago";
@@ -34,6 +35,8 @@ type ActionModal =
 export default function SolicitudDetalle() {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
+  const { user } = useAuth();
+  const isAdmin = user?.roles.includes("ADMIN") ?? false;
 
   const [detail, setDetail] = useState<SolicitudDetailDTO | null>(null);
   const [loading, setLoading] = useState(true);
@@ -99,6 +102,14 @@ export default function SolicitudDetalle() {
       cliente_apellidos: "",
       cliente_celular: detail.cliente.celular ?? "",
       cliente_email: "",
+      cliente_fecha_nacimiento: detail.cliente.fecha_nacimiento ?? "",
+      cliente_direccion: detail.cliente.direccion ?? "",
+      apoderado_nombres: "",
+      apoderado_apellidos: "",
+      apoderado_celular: detail.apoderado?.celular_1 ?? "",
+      apoderado_email: detail.apoderado?.email ?? "",
+      apoderado_fecha_nacimiento: detail.apoderado?.fecha_nacimiento ?? "",
+      apoderado_direccion: detail.apoderado?.direccion ?? "",
     });
     setEditing(true);
   };
@@ -134,6 +145,31 @@ export default function SolicitudDetalle() {
       }
       if (editData.cliente_email) {
         payload.cliente_email = editData.cliente_email;
+      }
+      if (editData.cliente_fecha_nacimiento !== undefined && editData.cliente_fecha_nacimiento !== (detail?.cliente.fecha_nacimiento ?? "")) {
+        payload.cliente_fecha_nacimiento = editData.cliente_fecha_nacimiento || undefined;
+      }
+      if (editData.cliente_direccion !== undefined && editData.cliente_direccion !== (detail?.cliente.direccion ?? "")) {
+        payload.cliente_direccion = editData.cliente_direccion || undefined;
+      }
+      // Apoderado fields
+      if (editData.apoderado_nombres) {
+        payload.apoderado_nombres = editData.apoderado_nombres;
+      }
+      if (editData.apoderado_apellidos) {
+        payload.apoderado_apellidos = editData.apoderado_apellidos;
+      }
+      if (editData.apoderado_celular !== undefined && editData.apoderado_celular !== (detail?.apoderado?.celular_1 ?? "")) {
+        payload.apoderado_celular = editData.apoderado_celular || undefined;
+      }
+      if (editData.apoderado_email !== undefined && editData.apoderado_email !== (detail?.apoderado?.email ?? "")) {
+        payload.apoderado_email = editData.apoderado_email || undefined;
+      }
+      if (editData.apoderado_fecha_nacimiento !== undefined && editData.apoderado_fecha_nacimiento !== (detail?.apoderado?.fecha_nacimiento ?? "")) {
+        payload.apoderado_fecha_nacimiento = editData.apoderado_fecha_nacimiento || undefined;
+      }
+      if (editData.apoderado_direccion !== undefined && editData.apoderado_direccion !== (detail?.apoderado?.direccion ?? "")) {
+        payload.apoderado_direccion = editData.apoderado_direccion || undefined;
       }
 
       const res = await api.patch<ApiResponse<SolicitudDetailDTO>>(`/solicitudes/${id}`, payload);
@@ -293,6 +329,23 @@ export default function SolicitudDetalle() {
     document.body.removeChild(link);
   };
 
+  // ── Eliminar solicitud (admin) ──
+  const [deleting, setDeleting] = useState(false);
+  const handleDeleteSolicitud = async () => {
+    if (!id) return;
+    if (!confirm("Eliminar esta solicitud eliminara todos los datos asociados (pagos, archivos, historial, asignaciones, resultados medicos). Esta accion es irreversible. Continuar?")) return;
+    setDeleting(true);
+    setError(null);
+    try {
+      await api.delete<{ ok: boolean }>(`/solicitudes/${id}`);
+      navigate("/app/solicitudes");
+    } catch (err: unknown) {
+      handleActionError(err);
+    } finally {
+      setDeleting(false);
+    }
+  };
+
   // ── Early returns ──
 
   if (loading) {
@@ -380,14 +433,20 @@ export default function SolicitudDetalle() {
         </div>
       )}
 
-      {/* ─── Cancelar solicitud (boton suelto, sin seccion) ─── */}
-      {can("CANCELAR") && activeModal !== "cancelar" && (
-        <div style={{ marginBottom: "0.75rem" }}>
+      {/* ─── Cancelar / Eliminar solicitud (botones sueltos) ─── */}
+      <div style={{ display: "flex", gap: "0.5rem", marginBottom: "0.75rem", flexWrap: "wrap" }}>
+        {can("CANCELAR") && activeModal !== "cancelar" && (
           <button onClick={() => openModal("cancelar")} style={actionBtnStyle("#b81414")}>
             Cancelar solicitud
           </button>
-        </div>
-      )}
+        )}
+        {isAdmin && (
+          <button onClick={handleDeleteSolicitud} disabled={deleting}
+            style={actionBtnStyle(deleting ? "#6c757d" : "#dc3545")}>
+            {deleting ? "Eliminando..." : "Eliminar solicitud"}
+          </button>
+        )}
+      </div>
 
       {/* ─── Cancelar form (aparece debajo del boton) ─── */}
       {activeModal === "cancelar" && (
@@ -443,13 +502,20 @@ export default function SolicitudDetalle() {
           <div><span style={labelStyle}>Nro documento: </span><span style={valueStyle}>{detail.cliente.numero_documento ?? "-"}</span></div>
           <div><span style={labelStyle}>Nombre: </span><span style={valueStyle}>{detail.cliente.nombre}</span></div>
           <div><span style={labelStyle}>Celular: </span><span style={valueStyle}>{detail.cliente.celular ?? "-"}</span></div>
+          <div><span style={labelStyle}>Email: </span><span style={valueStyle}>{detail.cliente.email ?? "-"}</span></div>
+          <div><span style={labelStyle}>Fecha nacimiento: </span><span style={valueStyle}>{detail.cliente.fecha_nacimiento ?? "-"}</span></div>
+          <div style={{ gridColumn: "span 2" }}><span style={labelStyle}>Direccion: </span><span style={valueStyle}>{detail.cliente.direccion ?? "-"}</span></div>
         </div>
         {detail.apoderado && (
           <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid #d1c4e9" }}>
             <strong style={{ fontSize: "0.85rem" }}>Apoderado</strong>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginTop: "0.25rem" }}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "0.5rem", marginTop: "0.25rem" }}>
               <div><span style={labelStyle}>Documento: </span><span style={valueStyle}>{detail.apoderado.tipo_documento} {detail.apoderado.numero_documento}</span></div>
               <div><span style={labelStyle}>Nombre: </span><span style={valueStyle}>{detail.apoderado.nombres} {detail.apoderado.apellidos}</span></div>
+              <div><span style={labelStyle}>Celular: </span><span style={valueStyle}>{detail.apoderado.celular_1 ?? "-"}</span></div>
+              <div><span style={labelStyle}>Email: </span><span style={valueStyle}>{detail.apoderado.email ?? "-"}</span></div>
+              <div><span style={labelStyle}>Fecha nacimiento: </span><span style={valueStyle}>{detail.apoderado.fecha_nacimiento ?? "-"}</span></div>
+              <div style={{ gridColumn: "span 3" }}><span style={labelStyle}>Direccion: </span><span style={valueStyle}>{detail.apoderado.direccion ?? "-"}</span></div>
             </div>
           </div>
         )}
@@ -522,7 +588,57 @@ export default function SolicitudDetalle() {
               <input value={editData.cliente_email ?? ""} onChange={(e) => setEditData({ ...editData, cliente_email: e.target.value })}
                 placeholder="correo@ejemplo.com" style={inputStyle} />
             </div>
+            <div>
+              <label style={labelStyle}>Fecha nacimiento del cliente</label>
+              <input type="date" value={editData.cliente_fecha_nacimiento ?? ""} onChange={(e) => setEditData({ ...editData, cliente_fecha_nacimiento: e.target.value })}
+                style={inputStyle} />
+            </div>
+            <div>
+              <label style={labelStyle}>Direccion del cliente</label>
+              <input value={editData.cliente_direccion ?? ""} onChange={(e) => setEditData({ ...editData, cliente_direccion: e.target.value })}
+                placeholder="Direccion" style={inputStyle} />
+            </div>
           </div>
+
+          {/* Apoderado fields */}
+          {detail.apoderado && (
+            <>
+              <h4 style={{ margin: "0.75rem 0 0.5rem", color: PRIMARY, fontSize: "0.9rem" }}>Apoderado</h4>
+              <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+                <div>
+                  <label style={labelStyle}>Nombres del apoderado</label>
+                  <input value={editData.apoderado_nombres || ""} onChange={(e) => setEditData({ ...editData, apoderado_nombres: e.target.value })}
+                    placeholder={detail.apoderado?.nombres || "Nombres"} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Apellidos del apoderado</label>
+                  <input value={editData.apoderado_apellidos || ""} onChange={(e) => setEditData({ ...editData, apoderado_apellidos: e.target.value })}
+                    placeholder={detail.apoderado?.apellidos ||"Apellidos"} style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Celular del apoderado</label>
+                  <input value={editData.apoderado_celular ?? ""} onChange={(e) => setEditData({ ...editData, apoderado_celular: e.target.value })}
+                    placeholder="Celular" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Email del apoderado</label>
+                  <input value={editData.apoderado_email ?? ""} onChange={(e) => setEditData({ ...editData, apoderado_email: e.target.value })}
+                    placeholder="correo@ejemplo.com" style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Fecha nacimiento del apoderado</label>
+                  <input type="date" value={editData.apoderado_fecha_nacimiento ?? ""} onChange={(e) => setEditData({ ...editData, apoderado_fecha_nacimiento: e.target.value })}
+                    style={inputStyle} />
+                </div>
+                <div>
+                  <label style={labelStyle}>Direccion del apoderado</label>
+                  <input value={editData.apoderado_direccion ?? ""} onChange={(e) => setEditData({ ...editData, apoderado_direccion: e.target.value })}
+                    placeholder="Direccion" style={inputStyle} />
+                </div>
+              </div>
+            </>
+          )}
+
           <div style={{ marginTop: "0.75rem" }}>
             <label style={labelStyle}>Comentario</label>
             <textarea value={editData.comentario ?? ""} onChange={(e) => setEditData({ ...editData, comentario: e.target.value })}

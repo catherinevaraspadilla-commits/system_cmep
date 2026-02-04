@@ -124,7 +124,7 @@ pago_solicitud, archivos, solicitud_archivo, resultado_medico
 
 ## Despues del seed
 
-1. Login: `https://cmep.<dominio>` con `hvarasg@hotmail.com` / la password que usaste
+1. Login: `https://cmepdoc.com` con `hvarasg@hotmail.com` / la password que usaste
 2. Ir a `/app/usuarios` y crear los usuarios reales:
    - Operadores (con rol OPERADOR + empleado)
    - Gestores (con rol GESTOR + empleado)

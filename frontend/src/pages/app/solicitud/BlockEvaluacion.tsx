@@ -4,7 +4,6 @@ import { getEvaluacionState, getEvaluacionBlockedText, isTerminal } from "./deta
 import {
   blockStyle, blockTitleStyle, statusDotStyle, labelStyle, valueStyle,
   inputStyle, actionBtnStyle, disabledBtnStyle, cancelBtnStyle, helperTextStyle,
-  tableStyle, thStyle, tdStyle, trStyle, emptyTextStyle,
 } from "./detailStyles";
 
 type ActionModal = string | null;
@@ -34,9 +33,6 @@ export default function BlockEvaluacion({
   const blockedText = getEvaluacionBlockedText(detail);
   const terminal = isTerminal(detail);
   const isBlocked = state === "blocked" || state === "pending";
-  const lastResultado = detail.resultados_medicos.length > 0
-    ? detail.resultados_medicos[detail.resultados_medicos.length - 1]
-    : null;
 
   const [cerrarFaltantes, setCerrarFaltantes] = useState<string[]>([]);
 

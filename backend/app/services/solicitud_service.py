@@ -21,7 +21,11 @@ from app.models.solicitud import (
     SolicitudAsignacion,
     SolicitudEstadoHistorial,
     PagoSolicitud,
+    SolicitudArchivo,
+    Archivo,
+    ResultadoMedico,
 )
+from app.models.cliente import ClienteApoderado
 from app.models.user import User
 from app.services.estado_operativo import derivar_estado_operativo
 from app.services.policy import get_acciones_permitidas, assert_allowed
@@ -57,6 +61,7 @@ async def find_or_create_persona(
     celular: str | None = None,
     email: str | None = None,
     fecha_nacimiento=None,
+    direccion: str | None = None,
     created_by: int | None = None,
 ) -> Persona:
     """Busca persona por (tipo_documento, numero_documento). Si no existe, la crea."""
@@ -67,6 +72,21 @@ async def find_or_create_persona(
     result = await db.execute(stmt)
     persona = result.scalar_one_or_none()
     if persona:
+        # Update fields if provided and different
+        if nombres and persona.nombres != nombres:
+            persona.nombres = nombres
+        if apellidos and persona.apellidos != apellidos:
+            persona.apellidos = apellidos
+        if celular and persona.celular_1 != celular:
+            persona.celular_1 = celular
+        if email and persona.email != email:
+            persona.email = email
+        if fecha_nacimiento and persona.fecha_nacimiento != fecha_nacimiento:
+            persona.fecha_nacimiento = fecha_nacimiento
+        if direccion and persona.direccion != direccion:
+            persona.direccion = direccion
+        if created_by:
+            persona.updated_by = created_by
         return persona
 
     persona = Persona(
@@ -77,6 +97,7 @@ async def find_or_create_persona(
         celular_1=celular,
         email=email,
         fecha_nacimiento=fecha_nacimiento,
+        direccion=direccion,
         created_by=created_by,
     )
     db.add(persona)
@@ -441,6 +462,9 @@ def build_detail_dto(
             "doc": f"{_enum_val(cliente_persona.tipo_documento)} {cliente_persona.numero_documento}" if cliente_persona else "?",
             "nombre": f"{cliente_persona.nombres} {cliente_persona.apellidos}" if cliente_persona else "?",
             "celular": cliente_persona.celular_1 if cliente_persona else None,
+            "email": cliente_persona.email if cliente_persona else None,
+            "fecha_nacimiento": cliente_persona.fecha_nacimiento.isoformat() if cliente_persona and cliente_persona.fecha_nacimiento else None,
+            "direccion": cliente_persona.direccion if cliente_persona else None,
         } if solicitud.cliente else None,
         "apoderado": {
             "persona_id": solicitud.apoderado.persona_id,
@@ -450,6 +474,8 @@ def build_detail_dto(
             "apellidos": solicitud.apoderado.apellidos,
             "celular_1": solicitud.apoderado.celular_1,
             "email": solicitud.apoderado.email,
+            "fecha_nacimiento": solicitud.apoderado.fecha_nacimiento.isoformat() if solicitud.apoderado.fecha_nacimiento else None,
+            "direccion": solicitud.apoderado.direccion,
         } if solicitud.apoderado else None,
         "servicio": {
             "servicio_id": solicitud.servicio.servicio_id,
@@ -761,3 +787,119 @@ async def cancelar_solicitud(
         comentario=comentario,
     ))
     await db.flush()
+
+
+# ── M8: Eliminar solicitud (solo ADMIN) ──────────────────────────────
+
+
+async def eliminar_solicitud(db: AsyncSession, solicitud: SolicitudCmep) -> None:
+    """
+    Elimina una solicitud y todas sus entidades dependientes en orden.
+    Limpia cliente/apoderado si quedan huerfanos.
+    """
+    from app.services.file_storage import delete_file
+
+    cliente_id = solicitud.cliente_id
+    apoderado_id = solicitud.apoderado_id
+
+    # 1. Resultados medicos
+    for rm in list(solicitud.resultados_medicos):
+        await db.delete(rm)
+
+    # 2-3. Archivos: junction + archivo fisico + registro
+    for sa in list(solicitud.archivos_rel):
+        archivo = sa.archivo
+        await db.delete(sa)
+        if archivo:
+            try:
+                await delete_file(archivo.storage_path)
+            except Exception:
+                pass  # Si falla borrado fisico, seguimos
+            await db.delete(archivo)
+
+    # 4. Pagos
+    for pago in list(solicitud.pagos):
+        await db.delete(pago)
+
+    # 5. Historial
+    for h in list(solicitud.historial):
+        await db.delete(h)
+
+    # 6. Asignaciones
+    for a in list(solicitud.asignaciones):
+        await db.delete(a)
+
+    # 7. La solicitud misma
+    await db.delete(solicitud)
+    await db.flush()
+
+    # 8-11. Limpieza condicional de cliente y apoderado
+    await _limpiar_cliente_huerfano(db, cliente_id)
+    if apoderado_id:
+        await _limpiar_apoderado_huerfano(db, apoderado_id)
+
+
+async def _persona_es_empleado_o_user(db: AsyncSession, persona_id: int) -> bool:
+    """Verifica si una persona tiene registro en empleados o users."""
+    emp = await db.execute(
+        select(func.count()).select_from(Empleado).where(Empleado.persona_id == persona_id)
+    )
+    if (emp.scalar() or 0) > 0:
+        return True
+    usr = await db.execute(
+        select(func.count()).select_from(User).where(User.persona_id == persona_id)
+    )
+    return (usr.scalar() or 0) > 0
+
+
+async def _limpiar_cliente_huerfano(db: AsyncSession, cliente_id: int) -> None:
+    """Elimina cliente + persona si ya no tiene solicitudes y no es empleado/user."""
+    count = (await db.execute(
+        select(func.count()).select_from(SolicitudCmep)
+        .where(SolicitudCmep.cliente_id == cliente_id)
+    )).scalar() or 0
+    if count > 0:
+        return
+
+    # Eliminar registros cliente_apoderado
+    ca_rows = (await db.execute(
+        select(ClienteApoderado).where(ClienteApoderado.cliente_id == cliente_id)
+    )).scalars().all()
+    for ca in ca_rows:
+        await db.delete(ca)
+
+    # Eliminar cliente
+    cliente = (await db.execute(
+        select(Cliente).where(Cliente.persona_id == cliente_id)
+    )).scalar_one_or_none()
+    if cliente:
+        await db.delete(cliente)
+        await db.flush()
+
+        # Eliminar persona si no es empleado/user
+        if not await _persona_es_empleado_o_user(db, cliente_id):
+            persona = (await db.execute(
+                select(Persona).where(Persona.persona_id == cliente_id)
+            )).scalar_one_or_none()
+            if persona:
+                await db.delete(persona)
+
+    await db.flush()
+
+
+async def _limpiar_apoderado_huerfano(db: AsyncSession, apoderado_id: int) -> None:
+    """Elimina persona del apoderado si ya no es apoderado de ninguna solicitud."""
+    count = (await db.execute(
+        select(func.count()).select_from(SolicitudCmep)
+        .where(SolicitudCmep.apoderado_id == apoderado_id)
+    )).scalar() or 0
+    if count > 0:
+        return
+
+    if not await _persona_es_empleado_o_user(db, apoderado_id):
+        persona = (await db.execute(
+            select(Persona).where(Persona.persona_id == apoderado_id)
+        )).scalar_one_or_none()
+        if persona:
+            await db.delete(persona)
+            await db.flush()

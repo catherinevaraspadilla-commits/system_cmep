@@ -48,6 +48,8 @@ export default function SolicitudNueva() {
   const [cliApellidos, setCliApellidos] = useState("");
   const [cliCelular, setCliCelular] = useState("");
   const [cliEmail, setCliEmail] = useState("");
+  const [cliFechaNacimiento, setCliFechaNacimiento] = useState("");
+  const [cliDireccion, setCliDireccion] = useState("");
 
   // Apoderado
   const [apoTipoDoc, setApoTipoDoc] = useState("DNI");
@@ -55,6 +57,9 @@ export default function SolicitudNueva() {
   const [apoNombres, setApoNombres] = useState("");
   const [apoApellidos, setApoApellidos] = useState("");
   const [apoCelular, setApoCelular] = useState("");
+  const [apoEmail, setApoEmail] = useState("");
+  const [apoFechaNacimiento, setApoFechaNacimiento] = useState("");
+  const [apoDireccion, setApoDireccion] = useState("");
 
   // Promotor
   const [promotores, setPromotores] = useState<PromotorListItem[]>([]);
@@ -92,8 +97,8 @@ export default function SolicitudNueva() {
       .get<{ ok: boolean; data: typeof servicios }>("/servicios")
       .then((res) => {
         setServicios(res.data);
-        if (res.data.length === 1) {
-          setServicioId(String(res.data[0].servicio_id));
+        if (res.data?.length === 1) {
+          setServicioId(String(res.data[0]?.servicio_id ?? ""));
         }
       })
       .catch(() => {});
@@ -122,6 +127,8 @@ export default function SolicitudNueva() {
         apellidos: cliApellidos.trim(),
         celular: cliCelular.trim() || undefined,
         email: cliEmail.trim() || undefined,
+        fecha_nacimiento: cliFechaNacimiento || undefined,
+        direccion: cliDireccion.trim() || undefined,
       },
     };
 
@@ -132,6 +139,9 @@ export default function SolicitudNueva() {
         nombres: apoNombres.trim(),
         apellidos: apoApellidos.trim(),
         celular: apoCelular.trim() || undefined,
+        email: apoEmail.trim() || undefined,
+        fecha_nacimiento: apoFechaNacimiento || undefined,
+        direccion: apoDireccion.trim() || undefined,
       };
     }
 
@@ -204,7 +214,7 @@ export default function SolicitudNueva() {
 
       <form onSubmit={handleSubmit}>
         {/* ── Cliente ── */}
-        <fieldset style={{ border: "1px solid #dee2e6", borderRadius: 4, padding: "1rem", marginBottom: "1rem" }}>
+        <fieldset style={{ border: "1px solid #dee2e6", borderRadius: 4, padding: "1rem", marginBottom: "1rem", background: "#e8f0fe" }}>
           <legend style={{ fontWeight: 700 }}>Datos del Cliente *</legend>
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "0.75rem" }}>
@@ -244,6 +254,17 @@ export default function SolicitudNueva() {
               <input type="email" value={cliEmail} onChange={(e) => setCliEmail(e.target.value)} style={inputStyle} />
             </div>
           </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+            <div style={fieldGroupStyle}>
+              <label style={labelStyle}>Fecha de nacimiento</label>
+              <input type="date" value={cliFechaNacimiento} onChange={(e) => setCliFechaNacimiento(e.target.value)} style={inputStyle} />
+            </div>
+            <div style={fieldGroupStyle}>
+              <label style={labelStyle}>Direccion</label>
+              <input value={cliDireccion} onChange={(e) => setCliDireccion(e.target.value)} style={inputStyle} />
+            </div>
+          </div>
         </fieldset>
 
         {/* ── Apoderado toggle ── */}
@@ -260,7 +281,7 @@ export default function SolicitudNueva() {
         </div>
 
         {conApoderado && (
-          <fieldset style={{ border: "1px solid #dee2e6", borderRadius: 4, padding: "1rem", marginBottom: "1rem" }}>
+          <fieldset style={{ border: "1px solid #dee2e6", borderRadius: 4, padding: "1rem", marginBottom: "1rem", background: "#fff8e1" }}>
             <legend style={{ fontWeight: 700 }}>Datos del Apoderado</legend>
 
             <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: "0.75rem" }}>
@@ -287,15 +308,32 @@ export default function SolicitudNueva() {
               </div>
             </div>
 
-            <div style={fieldGroupStyle}>
-              <label style={labelStyle}>Celular</label>
-              <input value={apoCelular} onChange={(e) => setApoCelular(e.target.value)} style={{ ...inputStyle, maxWidth: 300 }} />
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+              <div style={fieldGroupStyle}>
+                <label style={labelStyle}>Celular</label>
+                <input value={apoCelular} onChange={(e) => setApoCelular(e.target.value)} style={inputStyle} />
+              </div>
+              <div style={fieldGroupStyle}>
+                <label style={labelStyle}>Email</label>
+                <input type="email" value={apoEmail} onChange={(e) => setApoEmail(e.target.value)} style={inputStyle} />
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
+              <div style={fieldGroupStyle}>
+                <label style={labelStyle}>Fecha de nacimiento</label>
+                <input type="date" value={apoFechaNacimiento} onChange={(e) => setApoFechaNacimiento(e.target.value)} style={inputStyle} />
+              </div>
+              <div style={fieldGroupStyle}>
+                <label style={labelStyle}>Direccion</label>
+                <input value={apoDireccion} onChange={(e) => setApoDireccion(e.target.value)} style={inputStyle} />
+              </div>
             </div>
           </fieldset>
         )}
 
         {/* ── Promotor ── */}
-        <fieldset style={{ border: "1px solid #dee2e6", borderRadius: 4, padding: "1rem", marginBottom: "1rem" }}>
+        <fieldset style={{ border: "1px solid #dee2e6", borderRadius: 4, padding: "1rem", marginBottom: "1rem", background: "#e8f5e9" }}>
           <legend style={{ fontWeight: 700 }}>Promotor (opcional)</legend>
           <div style={fieldGroupStyle}>
             <label style={labelStyle}>Opcion</label>
