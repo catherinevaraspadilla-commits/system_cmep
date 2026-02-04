@@ -455,7 +455,7 @@ export default function UsuariosLista() {
                   </div>
                 </div>
                 <div>
-                  <label style={labelStyle}>Telefono</label>
+                  <label style={labelStyle}>Celular 1</label>
                   <input
                     value={formTelefono}
                     onChange={(e) => setFormTelefono(e.target.value)}
@@ -559,7 +559,7 @@ export default function UsuariosLista() {
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
                   <div>
-                    <label style={labelStyle}>Telefono</label>
+                    <label style={labelStyle}>Celular 1</label>
                     <input
                       value={formTelefono}
                       onChange={(e) => setFormTelefono(e.target.value)}
