@@ -68,6 +68,10 @@ export default function SolicitudDetalle() {
   const [uploadTipo, setUploadTipo] = useState("DOCUMENTO");
   const [uploading, setUploading] = useState(false);
 
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+
+
   const fetchDetail = useCallback(async () => {
     if (!id) return;
     setLoading(true);
@@ -204,18 +208,24 @@ export default function SolicitudDetalle() {
 
   // ── Workflow action handler ──
   const handleActionError = (err: unknown) => {
-    const e = err as { status?: number; detail?: string };
-    if (e.status === 403) {
-      setError("No autorizado para esta accion.");
-    } else if (e.status === 409) {
-      setError("La solicitud cambio. Recargando...");
-      fetchDetail();
-    } else if (e.status === 422) {
-      setError(e.detail ?? "Datos invalidos.");
-    } else {
-      setError(e.detail ?? "Error al ejecutar accion");
-    }
-  };
+  const e = err as { status?: number; detail?: string; code?: string };
+
+  if (e.status === 403) {
+    setError("No autorizado para esta accion.");
+  } else if (e.status === 409) {
+    setError("La solicitud cambio. Recargando...");
+    fetchDetail();
+  } else if (e.status === 422) {
+    setError(e.detail ?? "Datos invalidos.");
+  } else if (e.status === 504) {
+    setError(e.detail ?? "La subida expiró (timeout). Intenta de nuevo.");
+  } else if (e.status === 502) {
+    setError(e.detail ?? "Problema con almacenamiento. Intenta de nuevo.");
+  } else {
+    setError(e.detail ?? "Error al ejecutar accion");
+  }
+};
+
 
   const executeAction = async (endpoint: string, payload: unknown) => {
     if (!id) return;
@@ -292,7 +302,7 @@ export default function SolicitudDetalle() {
   const handleUploadFile = async () => {
     if (!id || !uploadFile) return;
     setUploading(true);
-    setError(null);
+    setUploadError(null); // solo upload
     try {
       const formData = new FormData();
       formData.append("file", uploadFile);
@@ -302,7 +312,9 @@ export default function SolicitudDetalle() {
       setUploadTipo("DOCUMENTO");
       fetchDetail();
     } catch (err: unknown) {
-      handleActionError(err);
+      const e = err as { status?: number; detail?: string; code?: string };
+      // Mostramos el detalle que ya normaliza api.upload()
+      setUploadError(e.detail ?? "Falló la subida del archivo. Intenta nuevamente.");
     } finally {
       setUploading(false);
     }
@@ -365,7 +377,32 @@ export default function SolicitudDetalle() {
     );
   }
 
-  if (!detail) return null;
+if (!detail) {
+  return (
+    <div>
+      <div
+        style={{
+          padding: "0.75rem",
+          background: "#fff3cd",
+          color: "#856404",
+          borderRadius: 4,
+          marginBottom: "1rem",
+        }}
+      >
+        No se pudo cargar la solicitud.
+        {error ? ` Detalle: ${error}` : ""}
+      </div>
+
+      <button onClick={() => fetchDetail()} style={{ cursor: "pointer", marginRight: "0.5rem" }}>
+        Reintentar
+      </button>
+
+      <button onClick={() => navigate("/app/solicitudes")} style={{ cursor: "pointer" }}>
+        Volver a la lista
+      </button>
+    </div>
+  );
+}
 
   const estado = detail.estado_operativo as EstadoOperativo;
 
@@ -727,6 +764,22 @@ export default function SolicitudDetalle() {
             {uploading ? "Subiendo..." : "Subir archivo"}
           </button>
         </div>
+
+        {/* ⚠️ ERROR DE UPLOAD SOLO PARA ESTA SECCIÓN */}
+        {uploadError && (
+          <div
+            style={{
+              padding: "0.5rem 0.75rem",
+              background: "#f8d7da",
+              color: "#721c24",
+              borderRadius: 4,
+              marginBottom: "0.75rem",
+              fontSize: "0.85rem"
+            }}
+          >
+            {uploadError}
+          </div>
+        )}
 
         {/* File list */}
         {detail.archivos.length > 0 ? (

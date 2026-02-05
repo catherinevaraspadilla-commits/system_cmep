@@ -11,6 +11,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form
 from fastapi.responses import Response
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from app.services.file_storage import save_file, StorageUploadError
 
 from app.database import get_db
 from app.middleware.session_middleware import get_current_user
@@ -94,10 +95,23 @@ async def upload_archivo(
                       "message": f"Archivo excede el tamano maximo ({MAX_FILE_SIZE // (1024*1024)} MB)"},
         })
 
-    # Guardar en storage
+    # Guardar en storage (con manejo de fallos S3 para no “colgar” y dar error para modal)
     original_name = file.filename or "archivo"
     storage_name = generate_storage_name(original_name)
-    storage_path = await save_file(file_bytes, storage_name)
+
+    try:
+        storage_path = await save_file(file_bytes, storage_name)
+    except StorageUploadError as e:
+        status = 504 if e.code in ("S3_CONNECT_TIMEOUT", "S3_READ_TIMEOUT") else 502
+        raise HTTPException(status_code=status, detail={
+            "ok": False,
+            "error": {"code": e.code, "message": e.message},
+        })
+    except Exception:
+        raise HTTPException(status_code=500, detail={
+            "ok": False,
+            "error": {"code": "UPLOAD_INTERNAL_ERROR", "message": "Error interno subiendo el archivo."},
+        })
 
     # Crear registro Archivo
     archivo = Archivo(

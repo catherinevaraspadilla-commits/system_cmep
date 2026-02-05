@@ -30,18 +30,32 @@ async function uploadRequest<T>(path: string, formData: FormData): Promise<T> {
     credentials: "include",
     method: "POST",
     body: formData,
-    // No Content-Type header — browser sets multipart boundary automatically
   });
 
-  const body = await res.json();
+  const body = await res.json().catch(() => null);
 
   if (!res.ok) {
-    const error = body.error ?? body;
-    throw { status: res.status, ...error, detail: body.detail ?? error.message };
+    // Caso nuevo: FastAPI HTTPException(detail={ ok:false, error:{code,message} })
+    const d = body?.detail;
+
+    const code =
+      d?.error?.code ??          // detail.error.code
+      body?.error?.code ??       // body.error.code (por si existe)
+      "UNKNOWN_ERROR";
+
+    const message =
+      d?.error?.message ??       // detail.error.message
+      d?.message ??              // detail.message (por si fuera plano)
+      body?.error?.message ??
+      body?.message ??
+      "Error al subir archivo";
+
+    throw { status: res.status, code, detail: message };
   }
 
-  return body;
+  return body as T;
 }
+
 
 export const api = {
   get: <T>(path: string) => request<T>(path),

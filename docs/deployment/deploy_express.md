@@ -36,5 +36,3 @@ aws cloudfront create-invalidation --distribution-id E2QYC21NF9GJUY --paths "/in
 
 # 3. Invalidar cache
 aws cloudfront create-invalidation --distribution-id E2QYC21NF9GJUY --paths "/*"
-
-aws cloudfront create-invalidation --distribution-id E2QYC21NF9GJUY --paths "/index.html" "/assets/*"
