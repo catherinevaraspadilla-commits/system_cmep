@@ -28,6 +28,10 @@ from app.services.file_storage import (
     read_file,
     delete_file,
 )
+import logging
+
+logger = logging.getLogger(__name__)
+
 
 router = APIRouter(tags=["archivos"])
 
@@ -107,11 +111,13 @@ async def upload_archivo(
             "ok": False,
             "error": {"code": e.code, "message": e.message},
         })
-    except Exception:
+    except Exception as e:
+        logger.exception("UPLOAD_INTERNAL_ERROR solicitud_id=%s storage_name=%s", solicitud_id, storage_name)
         raise HTTPException(status_code=500, detail={
             "ok": False,
             "error": {"code": "UPLOAD_INTERNAL_ERROR", "message": "Error interno subiendo el archivo."},
         })
+
 
     # Crear registro Archivo
     archivo = Archivo(

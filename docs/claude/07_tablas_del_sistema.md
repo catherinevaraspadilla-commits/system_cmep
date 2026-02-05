@@ -216,7 +216,7 @@ Generado desde los modelos SQLAlchemy en `backend/app/models/`.
 |---------|------|----------|---------|-------|
 | promotor_id | INTEGER | No | autoincrement | PK |
 | tipo_promotor | ENUM(PERSONA,EMPRESA,OTROS) | No | - | |
-| fuente_promotor | VARCHAR(255) | Si | - | |
+| fuente_promotor | VARCHAR(255) | Si | - | | notarias, abogados, clientes referentes, etc.
 | persona_id | INTEGER | Si | - | FK -> personas.persona_id (solo si PERSONA) |
 | razon_social | VARCHAR(255) | Si | - | Solo si EMPRESA |
 | nombre_promotor_otros | VARCHAR(255) | Si | - | Solo si OTROS |

@@ -9,11 +9,12 @@ aws ecr get-login-password --region us-east-1 | docker login --username AWS --pa
 #### Comandos
 ```bash
 # 1. Build y push imagen
-Opción 1 — desde la raíz del proyecto (sin el cd backend):
-docker build -t cmep-backend ./backend
 
 Opción 2 — si ya estás dentro de backend/:
 docker build -t cmep-backend .
+
+Opción 1 — desde la raíz del proyecto (sin el cd backend):
+docker build -t cmep-backend ./backend
 
 docker tag cmep-backend:latest 114082792962.dkr.ecr.us-east-1.amazonaws.com/cmep-backend:latest
 docker push 114082792962.dkr.ecr.us-east-1.amazonaws.com/cmep-backend:latest

@@ -38,10 +38,10 @@ class Settings(BaseSettings):
     CORS_ORIGINS: str = "http://localhost:3000"
 
     # Storage
-    FILE_STORAGE: str = "local"
+    FILE_STORAGE: str = "s3"
     UPLOAD_DIR: str = "uploads"
     S3_BUCKET: str = ""
-
+    S3_REGION: str = "us-east-1"    
     # Cookies (produccion)
     COOKIE_DOMAIN: str = ""  # vacio = no domain attr; prod: ".tudominio.com"
 

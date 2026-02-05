@@ -369,6 +369,12 @@ docker push 114082792962.dkr.ecr.us-east-1.amazonaws.com/cmep-backend:latest
 
 ### Redesplegar frontend (cambios de UI)
 ```bash
+
+#0 Git
+git add .
+git commit -m "Deploy: cambios de UI" 
+git push origin
+
 # 1. Build
 cd frontend
 $env:VITE_API_URL="https://api.cmepdoc.com"
@@ -376,11 +382,11 @@ npm run build
 
 # 2. Upload
 aws s3 sync dist/ s3://cmep-archivos-frontend/ --delete
+aws cloudfront create-invalidation --distribution-id E2QYC21NF9GJUY --paths "/index.html" "/assets/*"
 
 # 3. Invalidar cache
 aws cloudfront create-invalidation --distribution-id E2QYC21NF9GJUY --paths "/*"
 
-aws cloudfront create-invalidation --distribution-id E2QYC21NF9GJUY --paths "/index.html" "/assets/*"
 
 ```
 

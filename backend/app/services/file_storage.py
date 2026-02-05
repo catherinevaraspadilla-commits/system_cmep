@@ -64,21 +64,18 @@ async def _local_delete(storage_path: str) -> None:
 
 _s3_client = None
 
-
-
 def _get_s3_client():
     cfg = Config(
-        connect_timeout=5,   # conecta rápido o falla
-        read_timeout=60,     # tiempo razonable para subir/leer
+        connect_timeout=5,
+        read_timeout=60,
         retries={"max_attempts": 2, "mode": "standard"},
     )
     return boto3.client(
         "s3",
-        aws_access_key_id=settings.S3_ACCESS_KEY,
-        aws_secret_access_key=settings.S3_SECRET_KEY,
-        region_name=settings.S3_REGION,
+        region_name=settings.S3_REGION,  # o AWS_REGION si así lo tienes
         config=cfg,
     )
+
 
 class StorageUploadError(Exception):
     def __init__(self, code: str, message: str):
@@ -91,6 +88,8 @@ async def _s3_save(file_bytes: bytes, key: str) -> str:
 
     try:
         # boto3 es BLOQUEANTE: lo sacamos del worker async
+        logger.warning("DEBUG storage: FILE_STORAGE=%s S3_BUCKET=%r", settings.FILE_STORAGE, settings.S3_BUCKET)
+
         await run_in_threadpool(
             client.put_object,
             Bucket=settings.S3_BUCKET,
