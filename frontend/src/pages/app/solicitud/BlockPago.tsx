@@ -131,7 +131,7 @@ export default function BlockPago({
             <div>
               <label style={labelStyle}>Monto *</label>
               <input type="number" step="0.01" value={pagoMonto} onChange={(e) => onPagoMontoChange(e.target.value)}
-                placeholder="150.00" style={inputStyle} />
+                placeholder="200.00" style={inputStyle} />
             </div>
             <div>
               <label style={labelStyle}>Moneda</label>
