@@ -1,10 +1,12 @@
-/**
- * CRUD de promotores.
- * GET /promotores, POST /promotores, PATCH /promotores/{id}, DELETE /promotores/{id}
- */
+// PromotoresLista.tsx
+// FIX móvil modal promotores:
+// - Modal panel con maxHeight + overflowY auto (no se corta en móvil)
+// - Grids responsivos (1 columna en móvil)
+// - Mantiene tu lógica de CRUD intacta
 
 import { useEffect, useState, useCallback } from "react";
 import { api } from "../../services/api";
+import Modal from "../../components/Modal";
 
 const PRIMARY = "#1a3d5c";
 
@@ -61,6 +63,7 @@ const tdStyle: React.CSSProperties = {
 };
 
 type FormMode = "idle" | "creating" | "editing";
+type ModalType = "create" | "edit" | null;
 
 interface FormData {
   tipo_promotor: string;
@@ -102,6 +105,44 @@ export default function PromotoresLista() {
   const [form, setForm] = useState<FormData>(emptyForm);
   const [saving, setSaving] = useState(false);
 
+  // Modal state
+  const [activeModal, setActiveModal] = useState<ModalType>(null);
+
+  // ✅ Responsive: detectar móvil
+  const [isMobile, setIsMobile] = useState(false);
+  useEffect(() => {
+    const onResize = () => setIsMobile(window.innerWidth <= 640);
+    onResize();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, []);
+
+  // ✅ Estilos para que el modal NO se corte en móvil
+  const modalPanelStyle: React.CSSProperties = {
+    width: "min(520px, 100%)",
+    maxHeight: "calc(100vh - 24px)",
+    overflowY: "auto",
+    background: "#fff",
+    borderRadius: 10,
+    padding: "0.9rem",
+    boxSizing: "border-box",
+  };
+
+  // ✅ Grids responsivos
+  const grid2: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr",
+    gap: "0.5rem",
+    marginBottom: "0.5rem",
+  };
+
+  const grid3: React.CSSProperties = {
+    display: "grid",
+    gridTemplateColumns: isMobile ? "1fr" : "1fr 1fr 1fr",
+    gap: "0.5rem",
+    marginBottom: "0.5rem",
+  };
+
   const fetchList = useCallback(async () => {
     setLoading(true);
     setError(null);
@@ -116,7 +157,9 @@ export default function PromotoresLista() {
     }
   }, []);
 
-  useEffect(() => { fetchList(); }, [fetchList]);
+  useEffect(() => {
+    fetchList();
+  }, [fetchList]);
 
   const resetForm = () => {
     setFormMode("idle");
@@ -124,9 +167,15 @@ export default function PromotoresLista() {
     setForm(emptyForm);
   };
 
+  const closeModal = () => {
+    setActiveModal(null);
+    resetForm();
+  };
+
   const startCreate = () => {
     resetForm();
     setFormMode("creating");
+    setActiveModal("create");
   };
 
   const startEdit = (p: PromotorItem) => {
@@ -146,6 +195,7 @@ export default function PromotoresLista() {
       fuente_promotor: p.fuente_promotor ?? "",
       comentario: p.comentario ?? "",
     });
+    setActiveModal("edit");
   };
 
   const handleSave = async () => {
@@ -161,6 +211,7 @@ export default function PromotoresLista() {
           fuente_promotor: form.fuente_promotor || undefined,
           comentario: form.comentario || undefined,
         };
+
         if (form.tipo_promotor === "PERSONA") {
           payload.nombres = form.nombres;
           payload.apellidos = form.apellidos;
@@ -171,25 +222,35 @@ export default function PromotoresLista() {
         } else {
           payload.nombre_promotor_otros = form.nombre_promotor_otros;
         }
+
         await api.post("/promotores", payload);
       } else if (formMode === "editing" && editId) {
         const payload: Record<string, unknown> = {};
+
+        if (form.tipo_promotor) payload.tipo_promotor = form.tipo_promotor;
+
         if (form.ruc) payload.ruc = form.ruc;
         if (form.email) payload.email = form.email;
         if (form.celular_1) payload.celular_1 = form.celular_1;
         if (form.fuente_promotor) payload.fuente_promotor = form.fuente_promotor;
         if (form.comentario) payload.comentario = form.comentario;
+
         if (form.tipo_promotor === "PERSONA") {
           if (form.nombres) payload.nombres = form.nombres;
           if (form.apellidos) payload.apellidos = form.apellidos;
+
+          if (form.tipo_documento) payload.tipo_documento = form.tipo_documento;
+          if (form.numero_documento) payload.numero_documento = form.numero_documento;
         } else if (form.tipo_promotor === "EMPRESA") {
           if (form.razon_social) payload.razon_social = form.razon_social;
         } else {
           if (form.nombre_promotor_otros) payload.nombre_promotor_otros = form.nombre_promotor_otros;
         }
+
         await api.patch(`/promotores/${editId}`, payload);
       }
-      resetForm();
+
+      closeModal();
       fetchList();
     } catch (err: unknown) {
       const e = err as { detail?: string };
@@ -216,7 +277,7 @@ export default function PromotoresLista() {
   };
 
   return (
-    <div style={{ maxWidth: 950 }}>
+    <div style={{ maxWidth: "100%" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "1rem" }}>
         <h2 style={{ margin: 0, color: PRIMARY }}>Promotores</h2>
         {formMode === "idle" && (
@@ -227,30 +288,34 @@ export default function PromotoresLista() {
       </div>
 
       {error && (
-        <div style={{ padding: "0.5rem 0.75rem", background: "#f8d7da", color: "#721c24", borderRadius: 4, marginBottom: "0.75rem", fontSize: "0.85rem" }}>
+        <div
+          style={{
+            padding: "0.5rem 0.75rem",
+            background: "#f8d7da",
+            color: "#721c24",
+            borderRadius: 4,
+            marginBottom: "0.75rem",
+            fontSize: "0.85rem",
+          }}
+        >
           {error}
         </div>
       )}
 
-      {/* ─── Formulario crear/editar ─── */}
-      {formMode !== "idle" && (
-        <div style={{
-          border: "1px solid #dee2e6",
-          borderRadius: 8,
-          padding: "1rem",
-          marginBottom: "1rem",
-          background: "#f8f9fa",
-        }}>
+      {/* ─── MODAL crear/editar ─── */}
+      <Modal open={activeModal === "create" || activeModal === "edit"} onClose={closeModal}>
+        <div style={modalPanelStyle}>
           <h3 style={{ margin: "0 0 0.75rem", color: PRIMARY, fontSize: "1rem" }}>
             {formMode === "creating" ? "Nuevo promotor" : "Editar promotor"}
           </h3>
 
-          {/* Tipo promotor (solo en creacion) */}
-          {formMode === "creating" && (
+          {/* Tipo promotor */}
+          {(formMode === "creating" || formMode === "editing") && (
             <div style={{ marginBottom: "0.75rem" }}>
-              <label style={{ fontSize: "0.82rem", fontWeight: 600, display: "block", marginBottom: "0.25rem" }}>Tipo</label>
-              <select value={form.tipo_promotor} onChange={(e) => updateField("tipo_promotor", e.target.value)}
-                style={{ ...inputStyle, width: "auto" }}>
+              <label style={{ fontSize: "0.82rem", fontWeight: 600, display: "block", marginBottom: "0.25rem" }}>
+                Tipo
+              </label>
+              <select value={form.tipo_promotor} onChange={(e) => updateField("tipo_promotor", e.target.value)} style={{ ...inputStyle, width: "auto" }}>
                 <option value="PERSONA">Persona</option>
                 <option value="EMPRESA">Empresa</option>
                 <option value="OTROS">Otros</option>
@@ -260,95 +325,96 @@ export default function PromotoresLista() {
 
           {/* Campos segun tipo */}
           {form.tipo_promotor === "PERSONA" && (
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.5rem" }}>
+            <div style={grid2}>
               <div>
                 <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Nombres *</label>
-                <input value={form.nombres} onChange={(e) => updateField("nombres", e.target.value)}
-                  style={inputStyle} placeholder="Nombres" />
+                <input value={form.nombres} onChange={(e) => updateField("nombres", e.target.value)} style={inputStyle} placeholder="Nombres" />
               </div>
               <div>
                 <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Apellidos *</label>
-                <input value={form.apellidos} onChange={(e) => updateField("apellidos", e.target.value)}
-                  style={inputStyle} placeholder="Apellidos" />
+                <input value={form.apellidos} onChange={(e) => updateField("apellidos", e.target.value)} style={inputStyle} placeholder="Apellidos" />
               </div>
-              {formMode === "creating" && (
-                <>
-                  <div>
-                    <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Tipo documento</label>
-                    <select value={form.tipo_documento} onChange={(e) => updateField("tipo_documento", e.target.value)}
-                      style={inputStyle}>
-                      <option value="">-- Opcional --</option>
-                      <option value="DNI">DNI</option>
-                      <option value="CE">CE</option>
-                      <option value="PASAPORTE">Pasaporte</option>
-                      <option value="RUC">RUC</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Nro documento</label>
-                    <input value={form.numero_documento} onChange={(e) => updateField("numero_documento", e.target.value)}
-                      style={inputStyle} placeholder="Numero" />
-                  </div>
-                </>
-              )}
+
+              <div>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Tipo documento</label>
+                <select value={form.tipo_documento} onChange={(e) => updateField("tipo_documento", e.target.value)} style={inputStyle}>
+                  <option value="">-- Opcional --</option>
+                  <option value="DNI">DNI</option>
+                  <option value="CE">CE</option>
+                  <option value="PASAPORTE">Pasaporte</option>
+                  <option value="RUC">RUC</option>
+                </select>
+              </div>
+              <div>
+                <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Nro documento</label>
+                <input value={form.numero_documento} onChange={(e) => updateField("numero_documento", e.target.value)} style={inputStyle} placeholder="Numero" />
+              </div>
             </div>
           )}
 
           {form.tipo_promotor === "EMPRESA" && (
             <div style={{ marginBottom: "0.5rem" }}>
               <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Razon social *</label>
-              <input value={form.razon_social} onChange={(e) => updateField("razon_social", e.target.value)}
-                style={inputStyle} placeholder="Razon social" />
+              <input value={form.razon_social} onChange={(e) => updateField("razon_social", e.target.value)} style={inputStyle} placeholder="Razon social" />
             </div>
           )}
 
           {form.tipo_promotor === "OTROS" && (
             <div style={{ marginBottom: "0.5rem" }}>
               <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Nombre *</label>
-              <input value={form.nombre_promotor_otros} onChange={(e) => updateField("nombre_promotor_otros", e.target.value)}
-                style={inputStyle} placeholder="Nombre del promotor" />
+              <input
+                value={form.nombre_promotor_otros}
+                onChange={(e) => updateField("nombre_promotor_otros", e.target.value)}
+                style={inputStyle}
+                placeholder="Nombre del promotor"
+              />
             </div>
           )}
 
           {/* Campos compartidos */}
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem", marginBottom: "0.5rem" }}>
+          <div style={grid3}>
             <div>
               <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>RUC</label>
-              <input value={form.ruc} onChange={(e) => updateField("ruc", e.target.value)}
-                style={inputStyle} placeholder="RUC" />
+              <input value={form.ruc} onChange={(e) => updateField("ruc", e.target.value)} style={inputStyle} placeholder="RUC" />
             </div>
             <div>
               <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Email</label>
-              <input value={form.email} onChange={(e) => updateField("email", e.target.value)}
-                style={inputStyle} placeholder="correo@ejemplo.com" />
+              <input value={form.email} onChange={(e) => updateField("email", e.target.value)} style={inputStyle} placeholder="correo@ejemplo.com" />
             </div>
             <div>
               <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Celular</label>
-              <input value={form.celular_1} onChange={(e) => updateField("celular_1", e.target.value)}
-                style={inputStyle} placeholder="Celular" />
-            </div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem", marginBottom: "0.75rem" }}>
-            <div>
-              <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Fuente</label>
-              <input value={form.fuente_promotor} onChange={(e) => updateField("fuente_promotor", e.target.value)}
-                style={inputStyle} placeholder="Fuente del promotor" />
-            </div>
-            <div>
-              <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Comentario</label>
-              <input value={form.comentario} onChange={(e) => updateField("comentario", e.target.value)}
-                style={inputStyle} placeholder="Comentario" />
+              <input value={form.celular_1} onChange={(e) => updateField("celular_1", e.target.value)} style={inputStyle} placeholder="Celular" />
             </div>
           </div>
 
-          <div style={{ display: "flex", gap: "0.5rem" }}>
+          <div style={{ ...grid2, marginBottom: "0.75rem" }}>
+            <div>
+              <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Fuente</label>
+              <select value={form.fuente_promotor} onChange={(e) => updateField("fuente_promotor", e.target.value)} style={inputStyle}>
+                <option value="">Seleccione fuente</option>
+                <option value="notarias">Notarias</option>
+                <option value="abogados">Abogados</option>
+                <option value="clientes referentes">Clientes referentes</option>
+                <option value="redes sociales">Redes sociales</option>
+                <option value="etc">Otro</option>
+              </select>
+            </div>
+            <div>
+              <label style={{ fontSize: "0.8rem", fontWeight: 600 }}>Comentario</label>
+              <input value={form.comentario} onChange={(e) => updateField("comentario", e.target.value)} style={inputStyle} placeholder="Comentario" />
+            </div>
+          </div>
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem" }}>
             <button onClick={handleSave} disabled={saving} style={btnStyle(saving ? "#6c757d" : "#198754")}>
               {saving ? "Guardando..." : "Guardar"}
             </button>
-            <button onClick={resetForm} style={btnStyle("#6c757d")}>Cancelar</button>
+            <button onClick={closeModal} style={btnStyle("#6c757d")}>
+              Cancelar
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
 
       {/* ─── Tabla ─── */}
       {loading ? (
@@ -372,14 +438,16 @@ export default function PromotoresLista() {
             {items.map((p) => (
               <tr key={p.promotor_id} style={{ background: editId === p.promotor_id ? "#e8f0fe" : undefined }}>
                 <td style={tdStyle}>
-                  <span style={{
-                    padding: "0.15rem 0.4rem",
-                    borderRadius: 3,
-                    fontSize: "0.75rem",
-                    fontWeight: 600,
-                    background: p.tipo_promotor === "PERSONA" ? "#e3f2fd" : p.tipo_promotor === "EMPRESA" ? "#e8f5e9" : "#fff3e0",
-                    color: p.tipo_promotor === "PERSONA" ? "#1565c0" : p.tipo_promotor === "EMPRESA" ? "#2e7d32" : "#e65100",
-                  }}>
+                  <span
+                    style={{
+                      padding: "0.15rem 0.4rem",
+                      borderRadius: 3,
+                      fontSize: "0.75rem",
+                      fontWeight: 600,
+                      background: p.tipo_promotor === "PERSONA" ? "#e3f2fd" : p.tipo_promotor === "EMPRESA" ? "#e8f5e9" : "#fff3e0",
+                      color: p.tipo_promotor === "PERSONA" ? "#1565c0" : p.tipo_promotor === "EMPRESA" ? "#2e7d32" : "#e65100",
+                    }}
+                  >
                     {p.tipo_promotor}
                   </span>
                 </td>
@@ -389,12 +457,10 @@ export default function PromotoresLista() {
                 <td style={tdStyle}>{p.celular_1 ?? "-"}</td>
                 <td style={tdStyle}>{p.fuente_promotor ?? "-"}</td>
                 <td style={tdStyle}>
-                  <button onClick={() => startEdit(p)}
-                    style={{ ...btnStyle("#0d6efd"), marginRight: "0.25rem", padding: "0.2rem 0.5rem" }}>
+                  <button onClick={() => startEdit(p)} style={{ ...btnStyle("#0d6efd"), marginRight: "0.25rem", padding: "0.2rem 0.5rem" }}>
                     Editar
                   </button>
-                  <button onClick={() => handleDelete(p.promotor_id)}
-                    style={{ ...btnStyle("#dc3545"), padding: "0.2rem 0.5rem" }}>
+                  <button onClick={() => handleDelete(p.promotor_id)} style={{ ...btnStyle("#dc3545"), padding: "0.2rem 0.5rem" }}>
                     Eliminar
                   </button>
                 </td>

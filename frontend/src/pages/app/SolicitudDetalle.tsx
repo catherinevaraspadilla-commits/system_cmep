@@ -408,7 +408,12 @@ if (!detail) {
 
   // ── Render ──
   return (
-    <div style={{ maxWidth: 900 }}>
+    <div
+    style={{
+      width: "100%"
+    }}
+  >
+
       {/* ─── Header compacto ─── */}
       <div style={{ marginBottom: "1rem" }}>
         <button
@@ -516,83 +521,209 @@ if (!detail) {
 
       {/* ─── Datos del cliente + promotor + info solicitud ─── */}
       <div style={{
-        border: "1px solid #d1c4e9",
-        borderRadius: 8,
-        padding: "1rem 1.25rem",
-        marginBottom: "1rem",
-        background: "#f3eef8",
-      }}>
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "0.75rem" }}>
-          <h3 style={{ margin: 0, color: PRIMARY }}>Datos del cliente</h3>
-          {can("EDITAR_DATOS") && !editing ? (
-            <button onClick={startEdit} style={actionBtnStyle("#6c757d")}>Editar datos</button>
-          ) : !editing ? (
-            <span style={{ fontSize: "0.78rem", color: "#6c757d", fontStyle: "italic" }}>
-              {detail.estado_operativo === "CANCELADO" || detail.estado_operativo === "CERRADO"
-                ? "Solicitud finalizada."
-                : ""}
+      border: "1px solid #d1c4e9",
+      borderRadius: 8,
+      padding: "1rem 1.25rem", // ✅ AQUÍ estaba el error
+      marginBottom: "1rem",
+      background: "#f3eef8",
+      width: "100%",
+      boxSizing: "border-box",
+      overflowX: "auto",
+      WebkitOverflowScrolling: "touch",
+    }}
+  >
+    <div
+      style={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        marginBottom: "0.75rem",
+        gap: "0.5rem",
+      }}
+    >
+      <h3 style={{ margin: 0, color: PRIMARY }}>Datos del cliente</h3>
+
+      {can("EDITAR_DATOS") && !editing ? (
+        <button onClick={startEdit} style={actionBtnStyle("#6c757d")}>
+          Editar datos
+        </button>
+      ) : !editing ? (
+        <span style={{ fontSize: "0.78rem", color: "#6c757d", fontStyle: "italic" }}>
+          {detail.estado_operativo === "CANCELADO" || detail.estado_operativo === "CERRADO"
+            ? "Solicitud finalizada."
+            : ""}
+        </span>
+      ) : null}
+    </div>
+
+    {/* CLIENTE (max 3 columnas) */}
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+          gap: "0.5rem",
+        }}
+      >
+      <div>
+        <span style={labelStyle}>Tipo documento: </span>
+        <span style={valueStyle}>{detail.cliente.tipo_documento ?? "-"}</span>
+      </div>
+      <div>
+        <span style={labelStyle}>Nro documento: </span>
+        <span style={valueStyle}>{detail.cliente.numero_documento ?? "-"}</span>
+      </div>
+      <div>
+        <span style={labelStyle}>Nombre: </span>
+        <span style={valueStyle}>{detail.cliente.nombre}</span>
+      </div>
+
+      <div>
+        <span style={labelStyle}>Celular: </span>
+        <span style={valueStyle}>{detail.cliente.celular ?? "-"}</span>
+      </div>
+      <div>
+        <span style={labelStyle}>Email: </span>
+        <span style={valueStyle}>{detail.cliente.email ?? "-"}</span>
+      </div>
+      <div>
+        <span style={labelStyle}>Fecha nacimiento: </span>
+        <span style={valueStyle}>{detail.cliente.fecha_nacimiento ?? "-"}</span>
+      </div>
+
+      <div style={{ gridColumn: "1 / -1" }}>
+        <span style={labelStyle}>Direccion: </span>
+        <span style={valueStyle}>{detail.cliente.direccion ?? "-"}</span>
+      </div>
+    </div>
+
+    {/* APODERADO (max 3 columnas) */}
+    {detail.apoderado && (
+      <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid #d1c4e9" }}>
+        
+        <h3 style={{ margin: 0, color: PRIMARY }}>Datos del Apoderado</h3>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: "0.5rem",
+            marginTop: "0.25rem",
+          }}
+        >
+          <div>
+            <span style={labelStyle}>Documento: </span>
+            <span style={valueStyle}>
+              {detail.apoderado.tipo_documento} {detail.apoderado.numero_documento}
             </span>
-          ) : null}
-        </div>
-        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "0.5rem" }}>
-          <div><span style={labelStyle}>Tipo documento: </span><span style={valueStyle}>{detail.cliente.tipo_documento ?? "-"}</span></div>
-          <div><span style={labelStyle}>Nro documento: </span><span style={valueStyle}>{detail.cliente.numero_documento ?? "-"}</span></div>
-          <div><span style={labelStyle}>Nombre: </span><span style={valueStyle}>{detail.cliente.nombre}</span></div>
-          <div><span style={labelStyle}>Celular: </span><span style={valueStyle}>{detail.cliente.celular ?? "-"}</span></div>
-          <div><span style={labelStyle}>Email: </span><span style={valueStyle}>{detail.cliente.email ?? "-"}</span></div>
-          <div><span style={labelStyle}>Fecha nacimiento: </span><span style={valueStyle}>{detail.cliente.fecha_nacimiento ?? "-"}</span></div>
-          <div style={{ gridColumn: "span 2" }}><span style={labelStyle}>Direccion: </span><span style={valueStyle}>{detail.cliente.direccion ?? "-"}</span></div>
-        </div>
-        {detail.apoderado && (
-          <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid #d1c4e9" }}>
-            <strong style={{ fontSize: "0.85rem" }}>Apoderado</strong>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr 1fr", gap: "0.5rem", marginTop: "0.25rem" }}>
-              <div><span style={labelStyle}>Documento: </span><span style={valueStyle}>{detail.apoderado.tipo_documento} {detail.apoderado.numero_documento}</span></div>
-              <div><span style={labelStyle}>Nombre: </span><span style={valueStyle}>{detail.apoderado.nombres} {detail.apoderado.apellidos}</span></div>
-              <div><span style={labelStyle}>Celular: </span><span style={valueStyle}>{detail.apoderado.celular_1 ?? "-"}</span></div>
-              <div><span style={labelStyle}>Email: </span><span style={valueStyle}>{detail.apoderado.email ?? "-"}</span></div>
-              <div><span style={labelStyle}>Fecha nacimiento: </span><span style={valueStyle}>{detail.apoderado.fecha_nacimiento ?? "-"}</span></div>
-              <div style={{ gridColumn: "span 3" }}><span style={labelStyle}>Direccion: </span><span style={valueStyle}>{detail.apoderado.direccion ?? "-"}</span></div>
-            </div>
           </div>
-        )}
-        {detail.promotor && (
-          <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid #d1c4e9" }}>
-            <strong style={{ fontSize: "0.85rem" }}>Promotor</strong>
-            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem", marginTop: "0.25rem" }}>
-              <div><span style={labelStyle}>Tipo: </span><span style={valueStyle}>{detail.promotor.tipo_promotor}</span></div>
-              <div><span style={labelStyle}>Nombre: </span><span style={valueStyle}>{detail.promotor.nombre}</span></div>
-              <div><span style={labelStyle}>RUC: </span><span style={valueStyle}>{detail.promotor.ruc ?? "-"}</span></div>
-              <div><span style={labelStyle}>Email: </span><span style={valueStyle}>{detail.promotor.email ?? "-"}</span></div>
-              <div><span style={labelStyle}>Celular: </span><span style={valueStyle}>{detail.promotor.celular ?? "-"}</span></div>
-              <div><span style={labelStyle}>Fuente: </span><span style={valueStyle}>{detail.promotor.fuente_promotor ?? "-"}</span></div>
-            </div>
+          <div>
+            <span style={labelStyle}>Nombre: </span>
+            <span style={valueStyle}>
+              {detail.apoderado.nombres} {detail.apoderado.apellidos}
+            </span>
           </div>
-        )}
-        <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid #d1c4e9" }}>
-          <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "0.5rem" }}>
-            <div><span style={labelStyle}>Creado: </span><span style={valueStyle}>{new Date(detail.created_at).toLocaleString()}</span></div>
-            {detail.fecha_cierre && (
-              <div><span style={labelStyle}>Fecha cierre: </span><span style={valueStyle}>{new Date(detail.fecha_cierre).toLocaleString()}</span></div>
-            )}
-            {detail.fecha_cancelacion && (
-              <div><span style={labelStyle}>Fecha cancelacion: </span><span style={valueStyle}>{new Date(detail.fecha_cancelacion).toLocaleString()}</span></div>
-            )}
+          <div>
+            <span style={labelStyle}>Celular: </span>
+            <span style={valueStyle}>{detail.apoderado.celular_1 ?? "-"}</span>
           </div>
-          {detail.comentario && (
-            <div style={{ marginTop: "0.5rem" }}>
-              <span style={labelStyle}>Comentario: </span>
-              <span style={valueStyle}>{detail.comentario}</span>
-            </div>
-          )}
-          {detail.comentario_admin && (
-            <div style={{ marginTop: "0.5rem" }}>
-              <span style={labelStyle}>Comentario admin: </span>
-              <span style={valueStyle}>{detail.comentario_admin}</span>
-            </div>
-          )}
+
+          <div>
+            <span style={labelStyle}>Email: </span>
+            <span style={valueStyle}>{detail.apoderado.email ?? "-"}</span>
+          </div>
+          <div>
+            <span style={labelStyle}>Fecha nacimiento: </span>
+            <span style={valueStyle}>{detail.apoderado.fecha_nacimiento ?? "-"}</span>
+          </div>
+
+          <div style={{ gridColumn: "1 / -1" }}>
+            <span style={labelStyle}>Direccion: </span>
+            <span style={valueStyle}>{detail.apoderado.direccion ?? "-"}</span>
+          </div>
         </div>
       </div>
+    )}
+
+    {/* PROMOTOR (ya estaba en 3 columnas, lo dejamos igual) */}
+    {detail.promotor && (
+      <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid #d1c4e9" }}>
+        <h3 style={{ margin: 0, color: PRIMARY }}>Datos del Promotor</h3>
+
+        <div
+          style={{
+            display: "grid",
+            gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
+            gap: "0.5rem",
+            marginTop: "0.25rem",
+          }}
+        >
+          <div>
+            <span style={labelStyle}>Tipo: </span>
+            <span style={valueStyle}>{detail.promotor.tipo_promotor}</span>
+          </div>
+          <div>
+            <span style={labelStyle}>Nombre: </span>
+            <span style={valueStyle}>{detail.promotor.nombre}</span>
+          </div>
+          <div>
+            <span style={labelStyle}>RUC: </span>
+            <span style={valueStyle}>{detail.promotor.ruc ?? "-"}</span>
+          </div>
+
+          <div>
+            <span style={labelStyle}>Email: </span>
+            <span style={valueStyle}>{detail.promotor.email ?? "-"}</span>
+          </div>
+          <div>
+            <span style={labelStyle}>Celular: </span>
+            <span style={valueStyle}>{detail.promotor.celular ?? "-"}</span>
+          </div>
+          <div>
+            <span style={labelStyle}>Fuente: </span>
+            <span style={valueStyle}>{detail.promotor.fuente_promotor ?? "-"}</span>
+          </div>
+        </div>
+      </div>
+    )}
+
+    {/* FOOTER FECHAS/COMENTARIOS (max 3 columnas) */}
+    <div style={{ marginTop: "0.75rem", paddingTop: "0.75rem", borderTop: "1px solid #d1c4e9" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "0.5rem" }}>
+        <div>
+          <span style={labelStyle}>Creado: </span>
+          <span style={valueStyle}>{new Date(detail.created_at).toLocaleString()}</span>
+        </div>
+
+        {detail.fecha_cierre && (
+          <div>
+            <span style={labelStyle}>Fecha cierre: </span>
+            <span style={valueStyle}>{new Date(detail.fecha_cierre).toLocaleString()}</span>
+          </div>
+        )}
+
+        {detail.fecha_cancelacion && (
+          <div>
+            <span style={labelStyle}>Fecha cancelacion: </span>
+            <span style={valueStyle}>{new Date(detail.fecha_cancelacion).toLocaleString()}</span>
+          </div>
+        )}
+      </div>
+
+      {detail.comentario && (
+        <div style={{ marginTop: "0.5rem" }}>
+          <span style={labelStyle}>Comentario: </span>
+          <span style={valueStyle}>{detail.comentario}</span>
+        </div>
+      )}
+
+      {detail.comentario_admin && (
+        <div style={{ marginTop: "0.5rem" }}>
+          <span style={labelStyle}>Comentario admin: </span>
+          <span style={valueStyle}>{detail.comentario_admin}</span>
+        </div>
+      )}
+    </div>
+  </div>
 
       {/* ─── Edit form (inline, solicitud-level fields) ─── */}
       {editing && (
@@ -783,6 +914,7 @@ if (!detail) {
 
         {/* File list */}
         {detail.archivos.length > 0 ? (
+          <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
           <table style={tableStyle}>
             <thead>
               <tr>
@@ -822,6 +954,7 @@ if (!detail) {
               ))}
             </tbody>
           </table>
+          </div>
         ) : (
           <p style={{ color: "#999", fontSize: "0.85rem", margin: 0 }}>Sin archivos adjuntos.</p>
         )}
@@ -831,6 +964,7 @@ if (!detail) {
       <div style={neutralSectionStyle}>
         <h3 style={{ margin: "0 0 0.75rem", color: PRIMARY }}>Historial de cambios</h3>
         {detail.historial.length > 0 ? (
+            <div style={{ width: "100%", overflowX: "auto", WebkitOverflowScrolling: "touch" }}>
           <table style={tableStyle}>
             <thead>
               <tr>
@@ -855,6 +989,7 @@ if (!detail) {
               ))}
             </tbody>
           </table>
+          </div>
         ) : (
           <p style={{ color: "#999", fontSize: "0.85rem", margin: 0 }}>Sin cambios registrados.</p>
         )}

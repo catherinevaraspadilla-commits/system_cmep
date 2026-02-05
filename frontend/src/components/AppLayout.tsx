@@ -38,7 +38,7 @@ export default function AppLayout({ user, onLogout }: Props) {
   };
 
   return (
-    <div style={{ fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif", maxWidth: 1100, margin: "0 auto", padding: "0 1rem" }}>
+    <div style={{ fontFamily: "'Segoe UI', system-ui, -apple-system, sans-serif", maxWidth: 1500, margin: "0 auto", padding: "0 1rem" }}>
       {/* Header */}
       <header
         style={{
