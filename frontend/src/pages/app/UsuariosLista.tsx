@@ -92,8 +92,6 @@ export default function UsuariosLista() {
     setEditingUser(user);
     setFormNombres(user.nombres);
     setFormApellidos(user.apellidos);
-    setFormTipoDoc(user.tipo_documento ?? "DNI");
-    setFormNumeroDoc(user.numero_documento ?? "");
     setFormTelefono(user.telefono ?? "");
     setFormEmailPersona(user.email ?? "");
     setFormCelular2(user.celular_2 ?? "");
@@ -138,8 +136,6 @@ export default function UsuariosLista() {
         roles: formRoles,
       };
       if (formTelefono.trim()) payload.telefono = formTelefono.trim();
-      if (formDireccion.trim()) payload.direccion = formDireccion.trim();
-      if (formFechaNac) payload.fecha_nacimiento = formFechaNac;
 
       await api.post("/admin/usuarios", payload);
       setSuccess("Usuario creado exitosamente");
@@ -160,8 +156,6 @@ export default function UsuariosLista() {
       const payload: UpdateUserPayload = {};
       if (formNombres !== editingUser.nombres) payload.nombres = formNombres;
       if (formApellidos !== editingUser.apellidos) payload.apellidos = formApellidos;
-      if ((formTipoDoc || "") !== (editingUser.tipo_documento || "")) payload.tipo_documento = formTipoDoc;
-      if ((formNumeroDoc || "") !== (editingUser.numero_documento || "")) payload.numero_documento = formNumeroDoc;
       if ((formTelefono || "") !== (editingUser.telefono || "")) payload.telefono = formTelefono;
       if ((formEmailPersona || "") !== (editingUser.email || "")) payload.email = formEmailPersona;
       if ((formCelular2 || "") !== (editingUser.celular_2 || "")) payload.celular_2 = formCelular2;
@@ -463,23 +457,6 @@ export default function UsuariosLista() {
                   />
                 </div>
                 <div>
-                  <label style={labelStyle}>Dirección</label>
-                  <input
-                    value={formDireccion}
-                    onChange={(e) => setFormDireccion(e.target.value)}
-                    style={inputStyle}
-                  />
-                </div>
-                <div>
-                  <label style={labelStyle}>Fecha de Nacimiento</label>
-                  <input
-                    type="date"
-                    value={formFechaNac}
-                    onChange={(e) => setFormFechaNac(e.target.value)}
-                    style={inputStyle}
-                  />
-                </div>
-                <div>
                   <label style={labelStyle}>Roles *</label>
                   <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
                     {ALL_ROLES.map((role) => (
@@ -537,28 +514,6 @@ export default function UsuariosLista() {
                 </div>
                 <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
                   <div>
-                    <label style={labelStyle}>Tipo Doc</label>
-                    <select
-                      value={formTipoDoc}
-                      onChange={(e) => setFormTipoDoc(e.target.value)}
-                      style={inputStyle}
-                    >
-                      <option value="DNI">DNI</option>
-                      <option value="CE">CE</option>
-                      <option value="PASAPORTE">PASAPORTE</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label style={labelStyle}>Numero Doc</label>
-                    <input
-                      value={formNumeroDoc}
-                      onChange={(e) => setFormNumeroDoc(e.target.value)}
-                      style={inputStyle}
-                    />
-                  </div>
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.5rem" }}>
-                  <div>
                     <label style={labelStyle}>Celular 1</label>
                     <input
                       value={formTelefono}
@@ -599,6 +554,7 @@ export default function UsuariosLista() {
                     <label style={labelStyle}>Fecha de Nacimiento</label>
                     <input
                       type="date"
+                      placeholder="dd-mm-aaaa"
                       value={formFechaNac}
                       onChange={(e) => setFormFechaNac(e.target.value)}
                       style={inputStyle}

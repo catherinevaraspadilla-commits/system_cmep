@@ -1,0 +1,12 @@
+{
+  "dependencies": {
+    "@mui/icons-material": "^7.3.7",
+    "@mui/material": "^7.3.7",
+    "@mui/x-date-pickers": "^8.27.0",
+    "dayjs": "^1.11.19",
+    "react-datepicker": "^9.1.0"
+  },
+  "devDependencies": {
+    "@types/react": "^19.2.13"
+  }
+}

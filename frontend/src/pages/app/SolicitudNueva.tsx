@@ -258,7 +258,7 @@ export default function SolicitudNueva() {
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
             <div style={fieldGroupStyle}>
               <label style={labelStyle}>Fecha de nacimiento</label>
-              <input type="date" value={cliFechaNacimiento} onChange={(e) => setCliFechaNacimiento(e.target.value)} style={inputStyle} />
+              <input type="date" placeholder="dd-mm-aaaa" value={cliFechaNacimiento} onChange={(e) => setCliFechaNacimiento(e.target.value)} style={inputStyle} />
             </div>
             <div style={fieldGroupStyle}>
               <label style={labelStyle}>Direccion</label>
@@ -322,7 +322,7 @@ export default function SolicitudNueva() {
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "0.75rem" }}>
               <div style={fieldGroupStyle}>
                 <label style={labelStyle}>Fecha de nacimiento</label>
-                <input type="date" value={apoFechaNacimiento} onChange={(e) => setApoFechaNacimiento(e.target.value)} style={inputStyle} />
+                <input type="date" placeholder="dd-mm-aaaa" value={apoFechaNacimiento} onChange={(e) => setApoFechaNacimiento(e.target.value)} style={inputStyle} />
               </div>
               <div style={fieldGroupStyle}>
                 <label style={labelStyle}>Direccion</label>

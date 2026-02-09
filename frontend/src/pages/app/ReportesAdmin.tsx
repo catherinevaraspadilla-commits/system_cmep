@@ -193,20 +193,22 @@ export default function ReportesAdmin() {
           }}
         >
           <FilterField label="Desde">
-            <input
-              type="date"
-              value={desde}
-              onChange={(e) => setDesde(e.target.value)}
-              style={inputStyle}
-            />
+              <input
+                type="date"
+                placeholder="dd-mm-aaaa"
+                value={desde}
+                onChange={(e) => setDesde(e.target.value)}
+                style={inputStyle}
+              />
           </FilterField>
           <FilterField label="Hasta">
-            <input
-              type="date"
-              value={hasta}
-              onChange={(e) => setHasta(e.target.value)}
-              style={inputStyle}
-            />
+              <input
+                type="date"
+                placeholder="dd-mm-aaaa"
+                value={hasta}
+                onChange={(e) => setHasta(e.target.value)}
+                style={inputStyle}
+              />
           </FilterField>
           <FilterField label="Estado">
             <select
@@ -536,10 +538,10 @@ function EquipoTable({ items }: { items: RankingEquipoItem[] }) {
 const inputStyle: React.CSSProperties = {
   padding: "0.4rem 0.5rem",
   borderRadius: 4,
-  border: "1px solid rgba(255,255,255,0.4)",
-  background: "rgba(255,255,255,0.15)",
-  color: "#fff",
-  fontSize: "0.85rem",
+  border: "1px solid #bdbdbd",
+  background: "#fff",
+  color: "#222",
+  fontSize: "0.95rem",
   minWidth: 120,
 };
 

@@ -608,12 +608,20 @@ if (!detail) {
             gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
             gap: "0.5rem",
             marginTop: "0.25rem",
+            marginBottom: "0.25rem",
+
           }}
         >
           <div>
-            <span style={labelStyle}>Documento: </span>
+            <span style={labelStyle}>Tipo Documento: </span>
             <span style={valueStyle}>
-              {detail.apoderado.tipo_documento} {detail.apoderado.numero_documento}
+              {detail.apoderado.tipo_documento}
+            </span>
+          </div>
+          <div>
+            <span style={labelStyle}>Nro Documento: </span>
+            <span style={valueStyle}>
+              {detail.apoderado.numero_documento}
             </span>
           </div>
           <div>
@@ -655,6 +663,8 @@ if (!detail) {
             gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))",
             gap: "0.5rem",
             marginTop: "0.25rem",
+            marginBottom: "0.25rem",
+
           }}
         >
           <div>
@@ -758,8 +768,7 @@ if (!detail) {
             </div>
             <div>
               <label style={labelStyle}>Fecha nacimiento del cliente</label>
-              <input type="date" value={editData.cliente_fecha_nacimiento ?? ""} onChange={(e) => setEditData({ ...editData, cliente_fecha_nacimiento: e.target.value })}
-                style={inputStyle} />
+              <input type="date" placeholder="dd-mm-aaaa" value={editData.cliente_fecha_nacimiento ?? ""} onChange={(e) => setEditData({ ...editData, cliente_fecha_nacimiento: e.target.value })} style={inputStyle} />
             </div>
             <div>
               <label style={labelStyle}>Direccion del cliente</label>
@@ -795,8 +804,7 @@ if (!detail) {
                 </div>
                 <div>
                   <label style={labelStyle}>Fecha nacimiento del apoderado</label>
-                  <input type="date" value={editData.apoderado_fecha_nacimiento ?? ""} onChange={(e) => setEditData({ ...editData, apoderado_fecha_nacimiento: e.target.value })}
-                    style={inputStyle} />
+                  <input type="date" placeholder="dd-mm-aaaa" value={editData.apoderado_fecha_nacimiento ?? ""} onChange={(e) => setEditData({ ...editData, apoderado_fecha_nacimiento: e.target.value })} style={inputStyle} />
                 </div>
                 <div>
                   <label style={labelStyle}>Direccion del apoderado</label>

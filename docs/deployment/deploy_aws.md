@@ -379,8 +379,6 @@ git push origin
 cd frontend
 $env:VITE_API_URL="https://api.cmepdoc.com"
 npm run build
-
-# 2. Upload
 aws s3 sync dist/ s3://cmep-archivos-frontend/ --delete
 aws cloudfront create-invalidation --distribution-id E2QYC21NF9GJUY --paths "/index.html" "/assets/*"
 

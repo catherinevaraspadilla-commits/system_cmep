@@ -126,7 +126,7 @@ export default function BlockPago({
             </div>
             <div>
               <label style={labelStyle}>Fecha de pago *</label>
-              <input type="date" value={pagoFecha} onChange={(e) => onPagoFechaChange(e.target.value)} style={inputStyle} />
+              <input type="date" placeholder="dd-mm-aaaa" value={pagoFecha} onChange={(e) => onPagoFechaChange(e.target.value)} style={inputStyle} />
             </div>
             <div>
               <label style={labelStyle}>Monto *</label>
