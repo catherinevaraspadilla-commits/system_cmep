@@ -5,7 +5,6 @@ pydantic-settings==2.7.1
 
 # Database
 sqlalchemy[asyncio]==2.0.46
-asyncmy==0.2.9
 pymysql==1.1.1
 alembic==1.14.1
 
@@ -22,3 +21,8 @@ pytest-asyncio==0.25.2
 httpx==0.28.1
 aiosqlite==0.20.0
 anyio==4.8.0
+
+# MySQL async driver — solo necesario en produccion con MySQL
+# En Windows requiere Visual C++ Build Tools para compilar
+# Para instalar manualmente: pip install asyncmy==0.2.9
+# asyncmy==0.2.9
